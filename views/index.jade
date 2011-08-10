@@ -1,69 +1,67 @@
 doctype 5
 html
-  head
-    title= title
-    script(src="socket.io/socket.io.js");
-    script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js")
-    script
-      //script('http://cdn.socket.io/stable/socket.io.js')
-      $(function(){
+head
+title= title
+script(src="socket.io/socket.io.js");
+script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js")
+script
+  //script('http://cdn.socket.io/stable/socket.io.js')
+  $(function(){
 
-        var socket = io.connect();
-        socket.on('msg', function(data){
-          console.log(data);
-        });
-
-        socket.on('changeSong', function(songURI){
-          $("#loadSong").attr('src', songURI);
-
-          // bump previously played song up
-          var prevSong = $(".currentlyPlaying");
-          prevSong.removeClass("currentlyPlaying");
-          prevSong.addClass("alreadyPlayed");
-
-          // mark current song as playing
-          var nowPlaying = $(".comingUp").filter(":first");
-          nowPlaying.removeClass("comingUp");
-          nowPlaying.addClass("currentlyPlaying");
-        });
-
-        socket.on('songForList', function(songInfoRaw){
-          var songInfo = jQuery.parseJSON(songInfoRaw);
-          var trackStr = songInfo.track.artists[0].name + " - " + songInfo.track.name;
-          $("#queue").append("<p class='comingUp'>"+trackStr+"</p>");
-        });
-
-    
-        // add song to server queue
-        $("#sub").click(function(e){
-          e.preventDefault();
-          var uriToAdd = $("#uri").val()
-
-          $("#uri").val("");
-          socket.emit('queueUp', uriToAdd);
-        });
-
-        $("#playItOff").click(function(e){
-          e.preventDefault();
-          socket.emit('startPlayback');
-        });
-
-
+    var socket = io.connect();
+    socket.on('msg', function(data){
+      console.log(data);
       });
 
-  body   
-    
-    #songStuff
-      #inputSongs
-        form#uriForm
-          input#uri(type="text", size ="20" )
-          input#sub(type="submit", value="add")
-          form#next
-            input#playItOff(type="submit", value="next song")
-      #queue
+    socket.on('changeSong', function(songURI){
+      $("#loadSong").attr('src', songURI);
 
-    iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
+      // bump previously played song up
+      var prevSong = $(".currentlyPlaying");
+      prevSong.removeClass("currentlyPlaying");
+      prevSong.addClass("alreadyPlayed");
+
+      // mark current song as playing
+      var nowPlaying = $(".comingUp").filter(":first");
+      nowPlaying.removeClass("comingUp");
+      nowPlaying.addClass("currentlyPlaying");
+    });
+
+    socket.on('songForList', function(songInfoRaw){
+      var songInfo = jQuery.parseJSON(songInfoRaw);
+      var trackStr = songInfo.track.artists[0].name + " - " + songInfo.track.name;
+      $("#queue").append("<p class='comingUp'>"+trackStr+"</p>");
+    });
+
+
+    // add song to server queue
+    $("#sub").click(function(e){
+      e.preventDefault();
+      var uriToAdd = $("#uri").val()
+
+      $("#uri").val("");
+      socket.emit('queueUp', uriToAdd);
+    });
+
+    $("#playItOff").click(function(e){
+      e.preventDefault();
+      socket.emit('startPlayback');
+    });
+  });
+
+body   
+
+  #songStuff
+    #inputSongs
+      form#uriForm
+        input#uri(type="text", size ="20" )
+        input#sub(type="submit", value="add")
+        form#next
+          input#playItOff(type="submit", value="next song")
+    #queue
+
+  iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
 
 
 
-      
+
