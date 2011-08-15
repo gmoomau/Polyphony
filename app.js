@@ -35,6 +35,12 @@ app.get('/', function(req, res){
         actives: ++numUsers
     });
 });
+app.get('/:room', function(req, res){
+  res.render('room', {
+    room: req.params.room,
+    actives: 924
+  });
+});
 
 
 // Socket.io Server stuff
@@ -79,7 +85,6 @@ function playNextSong(){
         }, songInfo.track.length*1000);
     }
 }
-
 
 var port = process.env.PORT || 3000;
 app.listen(port);
