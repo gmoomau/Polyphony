@@ -37,6 +37,12 @@ script
       $("#goodSong").val(voteRecords.good);
       $("#neutralSong").val(voteRecords.neutral);
       $("#badSong").val(voteRecords.bad);
+      if (voteRecords.changed) {
+            $("#"+voteRecords.curVote+"Song").addClass('selectedVote').removeClass('nonselectedVote');
+            if (voteRecords.prevVote != '') {
+              $("#"+voteRecords.prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
+            }
+      }
     });
       
 
@@ -64,7 +70,7 @@ script
 
     $("#badSong").click(function(e){
       socket.emit('vote','bad');
-    });
+    });		
 
   });
 
@@ -76,11 +82,11 @@ body
     table#voteSongs(width="60%",)
         tr
           td Like: 
-            input#goodSong(type="button", value="0")
+            input#goodSong.nonselectedVote(type="button", value="0")
           td Neutral: 
-            input#neutralSong(type="button", value="0")
+            input#neutralSong.selectedVote(type="button", value="0")
           td Skip: 
-            input#badSong(type="button", value="0")
+            input#badSong.nonselectedVote(type="button", value="0")
     #inputSongs
       form#uriForm
         input#uri(type="text", size ="20" )

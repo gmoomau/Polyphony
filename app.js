@@ -34,7 +34,6 @@ app.get('/', function(req, res){
         title: 'sup son',
          actives: ++numUsers
     });
-    //    res.writeHead(200, {'Content-Type': 'text/html'});
 });
 
 app.get('/:room', function(req, res){
@@ -45,15 +44,21 @@ app.get('/:room', function(req, res){
 
 });
 
-//s.emit("<script type='text/javascript'> alert(foo); </script>");
-
 // Socket.io Server stuff
 var curQ = [];
 var spotify = require('./spotApi.js');
 var votes = {'good' : 0, 'neutral' : 0, 'bad' : 0};
 
+
 io.sockets.on('connection', function(socket){
     console.log("new client connected");
+
+    var clients = [];        // keeps track of info for different conneted users
+    clients[socket] = {vote : 'neutral'};
+    votes['neutral'] += 1;
+    votes['prevVote'] = '';
+    votes['curVote'] = 'neutral';
+
     // send current queue to client
     curQ.forEach(function(item){
         console.log(item);
@@ -77,17 +82,30 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('vote', function(vote) {
-	console.log(vote + " vote");
-	votes[vote] = votes[vote] + 1;
+	var prev = clients[socket].vote;
+	console.log(votes[prev]);
+	votes[prev] -= 1;
+	votes[vote] += 1;
+	clients[socket].vote = vote;
         console.log(votes);
-        io.sockets.emit('votes', votes);
+	votes['prevVote'] = prev;
+	votes['curVote'] = vote;
+        votes['changed'] = true;
+        socket.emit('votes', votes);
+        votes['changed']= false;
+	io.sockets.emit('votes', votes);
     });
 
+    votes['changed'] = false;
     io.sockets.emit('votes', votes);
-
 });
 
-
+io.sockets.on('disconnect', function(socket) {
+    votes[clients[socket].vote] -= 1;
+    votes['prevVote'] = '';
+    votes['curVote'] = '';
+    io.sockets.emit('votes',votes);
+});
 
 
 // song starting function

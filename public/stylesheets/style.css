@@ -22,18 +22,23 @@ a {
 }
 
 #goodSong {
-    color: #000000;
     background: #00DD00;
 }
 
 #neutralSong {
-    color: #000000;
     background: #BBBBBB;
 }
 
 #badSong {
-    color: #000000;
     background: #DD0000;
+}
+
+.selectedVote {
+    color: #0000FF;
+}
+
+.nonselectedVote {
+    color: #666666;
 }
 
 .comingUp {
