@@ -34,11 +34,11 @@ a {
 }
 
 .selectedVote {
-    color: #0000FF;
+    color: #000000;
 }
 
 .nonselectedVote {
-    color: #666666;
+    color: #888888;
 }
 
 .comingUp {

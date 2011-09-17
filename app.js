@@ -49,10 +49,11 @@ var curQ = [];
 var spotify = require('./spotApi.js');
 var votes = {'good' : 0, 'neutral' : 0, 'bad' : 0};
 
+var users = 0;
 
 io.sockets.on('connection', function(socket){
     console.log("new client connected");
-
+    users++;
     var clients = [];        // keeps track of info for different conneted users
     clients[socket] = {vote : 'neutral'};
     votes['neutral'] += 1;
@@ -94,6 +95,7 @@ io.sockets.on('connection', function(socket){
     socket.on('disconnect', function() {
 	votes[clients[socket].vote] -= 1;
 	io.sockets.emit('votes',votes);
+	users--;
     });
 
     
@@ -108,7 +110,7 @@ function playNextSong(){
         var songInfoRaw = curQ.shift();
         var songInfo = JSON.parse(songInfoRaw);
         votes['good'] = 0;
-        votes['neutral'] = 0;
+        votes['neutral'] = users;
         votes['bad'] = 0;
         io.sockets.emit('changeSong', songInfo.track.href);
         io.sockets.emit('votes', votes);

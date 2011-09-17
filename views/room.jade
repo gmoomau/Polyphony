@@ -15,6 +15,7 @@ script
       });
 
     socket.on('changeSong', function(songURI){
+      setVoteColor('neutral');      
       $("#loadSong").attr('src', songURI);
 
       // bump previously played song up
