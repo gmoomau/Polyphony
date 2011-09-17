@@ -91,15 +91,15 @@ io.sockets.on('connection', function(socket){
 	io.sockets.emit('votes', votes);
     });
 
+    socket.on('disconnect', function() {
+	votes[clients[socket].vote] -= 1;
+	io.sockets.emit('votes',votes);
+    });
+
+    
     io.sockets.emit('votes',votes);
 
 });
-
-io.sockets.on('disconnect', function(socket) {
-    votes[clients[socket].vote] -= 1;
-    io.sockets.emit('votes',votes);
-});
-
 
 // song starting function
 var curTimeout = null;

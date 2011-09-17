@@ -39,7 +39,10 @@ script
       $("#neutralSong").val(voteRecords.neutral);
       $("#badSong").val(voteRecords.bad);
     });
-      
+
+    socket.on('disconnect', function() {
+       socket.emit('disconnect');
+    });      
 
     // add song to server queue
     $("#sub").click(function(e){
