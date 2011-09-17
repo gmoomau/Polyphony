@@ -3,8 +3,6 @@
  * Module dependencies.
  */
 
-
-
 var express = require('express');
 var app = express.createServer();
 var io = require('socket.io').listen(app);
@@ -56,7 +54,6 @@ var votes = {'good' : 0, 'neutral' : 0, 'bad' : 0};
 
 io.sockets.on('connection', function(socket){
     console.log("new client connected");
-
     // send current queue to client
     curQ.forEach(function(item){
         console.log(item);
