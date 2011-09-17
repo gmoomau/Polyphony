@@ -50,7 +50,7 @@ app.get('/:room', function(req, res){
 // Socket.io Server stuff
 var curQ = [];
 var spotify = require('./spotApi.js');
-var votes = [0,0,0];
+var votes = {'good' : 0, 'neutral' : 0, 'bad' : 0};
 
 io.sockets.on('connection', function(socket){
     console.log("new client connected");
@@ -79,20 +79,12 @@ io.sockets.on('connection', function(socket){
 
     socket.on('vote', function(vote) {
 	console.log(vote + " vote");
-        if(vote == 'good') {
-	    votes[0] = votes[0] + 1;
-        }
-        else if(vote == 'neutral') {
-	    votes[1] = votes[1] + 1;
-        }
-        else if (vote == 'bad') {
-	    votes[2] = votes[2] + 1;
-        }
+	votes[vote] = votes[vote] + 1;
         console.log(votes);
-        io.sockets.emit('votes', {'good':votes[0],'neutral':votes[1],'bad':votes[2]});
+        io.sockets.emit('votes', votes);
     });
 
-    io.sockets.emit('votes', {'good':votes[0],'neutral':votes[1],'bad':votes[2]});
+    io.sockets.emit('votes', votes);
 
 });
 
@@ -105,11 +97,11 @@ function playNextSong(){
     if(curQ.length > 0){    
         var songInfoRaw = curQ.shift();
         var songInfo = JSON.parse(songInfoRaw);
-        votes[0] = 0;
-        votes[1] = 0;
-        votes[2] = 0;
+        votes['good'] = 0;
+        votes['neutral'] = 0;
+        votes['bad'] = 0;
         io.sockets.emit('changeSong', songInfo.track.href);
-        io.sockets.emit('votes', {'good':votes[0],'neutral':votes[1],'bad':votes[2]});
+        io.sockets.emit('votes', votes);
         curTimeout = setTimeout(function(){
             playNextSong();
         }, songInfo.track.length*1000);
