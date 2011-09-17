@@ -1,0 +1,19 @@
+playlist history
+separate into different rooms
+add chat
+voting
+song selection modes (queue, cycle through djs, ...)
+
+album support
+useful error messages
+
+refactor code
+  move client side js out of .jade files
+
+playlist support?
+recommendations
+
+
+memcached
+redis
+couchdb

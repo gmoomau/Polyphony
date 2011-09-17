@@ -1,0 +1,47 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+#songStuff {
+    float:right;
+    background: #000000;
+    border-radius: 10px;
+    color: #C0C0C0;
+}
+
+#inputSongs {
+    padding: 5px;
+}
+#queue {
+    padding: 5px;
+}
+
+#goodSong {
+    color: #000000;
+    background: #00DD00;
+}
+
+#neutralSong {
+    color: #000000;
+    background: #BBBBBB;
+}
+
+#badSong {
+    color: #000000;
+    background: #DD0000;
+}
+
+.comingUp {
+    color: #C0C0C0;
+}
+.alreadyPlayed {
+    color: #808080;
+}
+.currentlyPlaying {
+    color: #FFFFFF;
+}

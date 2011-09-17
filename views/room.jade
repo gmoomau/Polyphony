@@ -1,0 +1,97 @@
+doctype 5
+html
+head
+title sup #{room}
+script(src="socket.io/socket.io.js");
+script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js")
+script
+  //script('http://cdn.socket.io/stable/socket.io.js')
+  $(function(){
+
+    var socket = io.connect();
+    socket.on('msg', function(data){
+      console.log(data);
+      });
+
+    socket.on('changeSong', function(songURI){
+      $("#loadSong").attr('src', songURI);
+
+      // bump previously played song up
+      var prevSong = $(".currentlyPlaying");
+      prevSong.removeClass("currentlyPlaying");
+      prevSong.addClass("alreadyPlayed");
+
+      // mark current song as playing
+      var nowPlaying = $(".comingUp").filter(":first");
+      nowPlaying.removeClass("comingUp");
+      nowPlaying.addClass("currentlyPlaying");
+    });
+
+    socket.on('songForList', function(songInfoRaw){
+      var songInfo = jQuery.parseJSON(songInfoRaw);
+      var trackStr = songInfo.track.artists[0].name + " - " + songInfo.track.name;
+      $("#queue").append("<p class='comingUp'>"+trackStr+"</p>");
+    });
+
+    socket.on('votes', function(voteRecords){
+      $("#goodSong").val(voteRecords.good);
+      $("#neutralSong").val(voteRecords.neutral);
+      $("#badSong").val(voteRecords.bad);
+    });
+      
+
+    // add song to server queue
+    $("#sub").click(function(e){
+      e.preventDefault();
+      var uriToAdd = $("#uri").val()
+
+      $("#uri").val("");
+      socket.emit('queueUp', uriToAdd);
+    });
+
+    $("#playItOff").click(function(e){
+      e.preventDefault();
+      socket.emit('startPlayback');
+    });
+
+    $("#goodSong").click(function(e){
+      socket.emit('vote', 'good');
+    });
+
+    $("#neutralSong").click(function(e){
+      socket.emit('vote','neutral');
+    });
+
+    $("#badSong").click(function(e){
+      socket.emit('vote','bad');
+    });
+
+  });
+
+body   
+
+  #people
+    p #{actives} people currently connected
+  #songStuff
+    table#voteSongs(width="60%",)
+        tr
+          td Like: 
+            input#goodSong(type="button", value="0")
+          td Neutral: 
+            input#neutralSong(type="button", value="0")
+          td Skip: 
+            input#badSong(type="button", value="0")
+    #inputSongs
+      form#uriForm
+        input#uri(type="text", size ="20" )
+        input#sub(type="submit", value="add")
+        form#next
+          input#playItOff(type="submit", value="next song")
+    h5 Songs
+    #queue
+
+  iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
+
+
+
+
