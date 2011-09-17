@@ -88,22 +88,15 @@ io.sockets.on('connection', function(socket){
 	votes[vote] += 1;
 	clients[socket].vote = vote;
         console.log(votes);
-	votes['prevVote'] = prev;
-	votes['curVote'] = vote;
-        votes['changed'] = true;
-        socket.emit('votes', votes);
-        votes['changed']= false;
 	io.sockets.emit('votes', votes);
     });
 
-    votes['changed'] = false;
-    io.sockets.emit('votes', votes);
+    io.sockets.emit('votes',votes);
+
 });
 
 io.sockets.on('disconnect', function(socket) {
     votes[clients[socket].vote] -= 1;
-    votes['prevVote'] = '';
-    votes['curVote'] = '';
     io.sockets.emit('votes',votes);
 });
 

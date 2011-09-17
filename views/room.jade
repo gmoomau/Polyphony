@@ -5,6 +5,7 @@ title sup #{room}
 script(src="socket.io/socket.io.js");
 script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js")
 script
+  var prevVote = 'neutral';
   //script('http://cdn.socket.io/stable/socket.io.js')
   $(function(){
 
@@ -37,12 +38,6 @@ script
       $("#goodSong").val(voteRecords.good);
       $("#neutralSong").val(voteRecords.neutral);
       $("#badSong").val(voteRecords.bad);
-      if (voteRecords.changed) {
-            $("#"+voteRecords.curVote+"Song").addClass('selectedVote').removeClass('nonselectedVote');
-            if (voteRecords.prevVote != '') {
-              $("#"+voteRecords.prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
-            }
-      }
     });
       
 
@@ -62,17 +57,28 @@ script
 
     $("#goodSong").click(function(e){
       socket.emit('vote', 'good');
+      setVoteColor('good');
     });
 
     $("#neutralSong").click(function(e){
       socket.emit('vote','neutral');
+      setVoteColor('neutral');
     });
 
     $("#badSong").click(function(e){
       socket.emit('vote','bad');
+      setVoteColor('bad');
     });		
 
   });
+  
+  function setVoteColor(selected) {
+     $("#"+selected+"Song").attr('class', 'selectedVote');
+     if (prevVote != '') {
+        $("#"+prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
+     }
+     prevVote = selected;
+  };
 
 body   
 
