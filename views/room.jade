@@ -59,7 +59,7 @@ script
 
     socket.on('chat', function(name,msg) {
        if (name == 'system') {
-          $("#chatHistory").append("<p>"+msg+"</p>");
+          $("#chatHistory").append("<p> "+msg+"</p>");
        } 
        else {
           $("#chatHistory").append("<p>"+name+": "+msg+"</p>");

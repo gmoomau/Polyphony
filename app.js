@@ -118,8 +118,15 @@ io.sockets.on('connection', function(socket){
   socket.on('chat name', function(name) {
     console.log("****"+socket+"--"+clients[socket.id] +'\n');
 
+    try{
+      check(name).isAlphanumeric();
+    }
+    catch (e){
+      name = generateName("hax0r");
+    }
+
     socket.get('room', function(err, room) {
-      io.sockets.in(room).emit('chat', 'system', ' '+clients[socket.id].name+' set name to '+name+'<p>');
+      io.sockets.in(room).emit('chat', 'system', clients[socket.id].name+' set name to '+name);
       clients[socket.id].name = name;
     });
   });
@@ -127,8 +134,10 @@ io.sockets.on('connection', function(socket){
   socket.on('chat message', function(msg) {
     var name = clients[socket.id].name;
     console.log(clients[socket.id]);
+    
     socket.get('room', function(err,room) {
-      io.sockets.in(room).emit('chat', name, msg+'<p>');
+      var cleaned = sanitize(msg).xss();
+      io.sockets.in(room).emit('chat', name, cleaned);
     });
   });
 
@@ -152,24 +161,6 @@ io.sockets.on('connection', function(socket){
   io.sockets.in(room).emit('users', users[room]);
   io.sockets.in(room).emit('chat', 'system', ' new user connected <p>');
 
-  });
-
-  socket.on('chat name', function(name) {
-    try{
-      if(check(name).isAlphanumeric()){
-        clients[socket.id].name = name;
-      }
-    }
-    catch (e){
-      clients[socket.id].name = generateName("hax0r");
-    }
-  });
-
-  socket.on('chat message', function(msg) {
-    socket.get('room', function(err,room) {
-      var cleaned = sanitize(msg).xss();
-      io.sockets.in(room).emit('chat', clients[socket].name, cleaned);
-    });
   });
 
   // join a user to a given room
