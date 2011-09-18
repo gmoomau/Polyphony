@@ -33,6 +33,10 @@ a {
     background: #DD0000;
 }
 
+#search{
+    float: left;
+}
+
 .selectedVote {
     color: #000000;
 }
