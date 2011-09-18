@@ -6,10 +6,14 @@ script(src="socket.io/socket.io.js");
 script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js")
 script
   var prevVote = 'neutral';
+  var room = '#{room}';
   //script('http://cdn.socket.io/stable/socket.io.js')
   $(function(){
 
     var socket = io.connect();
+
+    socket.emit('join room', room);
+
     socket.on('msg', function(data){
       console.log(data);
       });
@@ -39,6 +43,10 @@ script
       $("#goodSong").val(voteRecords.good);
       $("#neutralSong").val(voteRecords.neutral);
       $("#badSong").val(voteRecords.bad);
+    });
+
+    socket.on('users', function(userCount){
+      $("#users").text(userCount + " people currently connected");
     });
 
     socket.on('disconnect', function() {
@@ -87,7 +95,8 @@ script
 body   
 
   #people
-    p #{actives} people currently connected
+    p Listening to: #{room}
+    p#users #{actives} people currently connected
   #songStuff
     table#voteSongs(width="60%",)
         tr

@@ -28,18 +28,17 @@ app.configure('production', function(){
 
 
 // Routes
-var numUsers = 0;
 app.get('/', function(req, res){
     res.render('index', {
         title: 'sup son',
-         actives: ++numUsers
+         actives: 0
     });
 });
 
 app.get('/:room', function(req, res){
   res.render('room', {
     room: req.params.room,
-    actives: 924
+    actives: 0
   });
 
 });
@@ -47,18 +46,15 @@ app.get('/:room', function(req, res){
 // Socket.io Server stuff
 var curQ = [];
 var spotify = require('./spotApi.js');
-var votes = {'good' : 0, 'neutral' : 0, 'bad' : 0};
+var votes = {};
 
-var users = 0;
+var users = {};
 
 io.sockets.on('connection', function(socket){
     console.log("new client connected");
-    users++;
+
     var clients = [];        // keeps track of info for different conneted users
     clients[socket] = {vote : 'neutral'};
-    votes['neutral'] += 1;
-    votes['prevVote'] = '';
-    votes['curVote'] = 'neutral';
 
     // send current queue to client
     curQ.forEach(function(item){
@@ -70,8 +66,11 @@ io.sockets.on('connection', function(socket){
         // if song is valid, get info
         spotify.apiLookup(song, function(songInfo){
             curQ.push(songInfo);
-            io.sockets.emit('songForList', songInfo);
-            console.log("curQ is: " + curQ);
+            socket.get('room', function(err,room) {
+                 io.sockets.in(room).emit('votes', votes[room]);
+                 io.sockets.in(room).emit('songForList', songInfo);
+                 console.log("curQ is: " + curQ);
+            });
         });
     });
 
@@ -84,23 +83,46 @@ io.sockets.on('connection', function(socket){
 
     socket.on('vote', function(vote) {
 	var prev = clients[socket].vote;
-	console.log(votes[prev]);
-	votes[prev] -= 1;
-	votes[vote] += 1;
-	clients[socket].vote = vote;
-        console.log(votes);
-	io.sockets.emit('votes', votes);
+        if (prev != vote) {
+            socket.get('room', function(err,room) {
+               console.log(votes[room][prev]);
+               votes[room][prev] -= 1;
+               votes[room][vote] += 1;
+               clients[socket].vote = vote;
+               console.log(votes);
+               io.sockets.in(room).emit('votes', votes[room]);
+		});
+        }
     });
 
     socket.on('disconnect', function() {
 	votes[clients[socket].vote] -= 1;
-	io.sockets.emit('votes',votes);
-	users--;
+        socket.get('room', function(err,room) {
+          if(room != null && room in users) { 
+               users[room]--;
+               io.sockets.in(room).emit('votes', votes[room]);
+          }
+        });
     });
 
-    
-    io.sockets.emit('votes',votes);
+    socket.on('join room', function(room) {
+        if (room in users){
+          users[room]++;
+          votes[room]['neutral']++;
+        }
+        else {
+            users[room] = 1;
+            votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
+        }
+	console.log('JOINED '+room+' VOTES:'+votes[room]);
+        socket.set('room', room);
+	socket.join(room);
 
+        io.sockets.in(room).emit('votes', votes[room]);
+	io.sockets.in(room).emit('users', users[room]);
+        
+    });
+ 
 });
 
 // song starting function
@@ -109,11 +131,16 @@ function playNextSong(){
     if(curQ.length > 0){    
         var songInfoRaw = curQ.shift();
         var songInfo = JSON.parse(songInfoRaw);
-        votes['good'] = 0;
-        votes['neutral'] = users;
-        votes['bad'] = 0;
-        io.sockets.emit('changeSong', songInfo.track.href);
-        io.sockets.emit('votes', votes);
+
+        socket.get('room', function(err,room) {
+            io.sockets.in(room).emit('changeSong', songInfo.track.href);
+            votes[room]['good'] = 0;
+            votes[room]['neutral'] = users[room];
+            votes[room]['bad'] = 0;
+        });
+
+        io.sockets.in(room).emit('votes', votes[room]);
+
         curTimeout = setTimeout(function(){
             playNextSong();
         }, songInfo.track.length*1000);
