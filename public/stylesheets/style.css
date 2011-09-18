@@ -35,10 +35,13 @@ a {
 
 #search{
     float: left;
+    width: 200px;
 }
 
 #chatHistory{
-    overflow: scroll;
+    overflow-y: auto;
+    word-wrap: break-word;
+    float: left
     width: 600px;
     height: 200px;
 }
