@@ -57,6 +57,10 @@ script
        $("#chatName").text(name);
     });
 
+    socket.on('name repeat', function(name) {
+       alert("Sorry the name '"+name+"' is already taken");
+    });
+
     socket.on('chat', function(name,msg) {
        if (name == 'system') {
           $("#chatHistory").append("<p> "+msg+"</p>");
