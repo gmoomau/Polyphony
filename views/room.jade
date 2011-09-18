@@ -85,10 +85,10 @@ script
   });
   
   function setVoteColor(selected) {
-     $("#"+selected+"Song").attr('class', 'selectedVote');
      if (prevVote != '') {
         $("#"+prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
      }
+     $("#"+selected+"Song").attr('class', 'selectedVote');	
      prevVote = selected;
   };
 

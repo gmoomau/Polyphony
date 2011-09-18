@@ -46,14 +46,14 @@ app.get('/:room', function(req, res){
 // Socket.io Server stuff
 var curQ = [];
 var spotify = require('./spotApi.js');
-var votes = {};
+var votes = {};          // indexed by room then 'good', 'neutral', 'bad'
 
-var users = {};
+var users = {};          // keeps track of user count per room
+var clients = [];        // keeps track of info per socket
 
 io.sockets.on('connection', function(socket){
     console.log("new client connected");
 
-    var clients = [];        // keeps track of info for different conneted users
     clients[socket] = {vote : 'neutral'};
 
     // send current queue to client
@@ -82,20 +82,22 @@ io.sockets.on('connection', function(socket){
 	});
     });
 
+    // User changed vote
     socket.on('vote', function(vote) {
 	var prev = clients[socket].vote;
-        if (prev != vote) {
-            socket.get('room', function(err,room) {
+        
+	if (prev != vote) {  // ignore if they vote for the same thing
+            socket.get('room', function(err,room) { // get room from socket
                console.log(votes[room][prev]);
                votes[room][prev] -= 1;
                votes[room][vote] += 1;
                clients[socket].vote = vote;
-               console.log(votes);
                io.sockets.in(room).emit('votes', votes[room]);
 		});
         }
     });
 
+    // when user disconnects, we have to decrement users and votes
     socket.on('disconnect', function() {
 	votes[clients[socket].vote] -= 1;
         socket.get('room', function(err,room) {
@@ -104,23 +106,27 @@ io.sockets.on('connection', function(socket){
                votes[room][clients[socket].vote]--;
                io.sockets.in(room).emit('votes', votes[room]);
                io.sockets.in(room).emit('users', users[room]);
+               // maybe get rid of room from the users/votes hashes if no one's in them?
           }
         });
     });
 
+    // join a user to a given room
     socket.on('join room', function(room) {
-        if (room in users){
+        if (room in users){  // if the room already exists, increment counts
           users[room]++;
           votes[room]['neutral']++;
         }
-        else {
+       else {   // otherwise we have to set the counts
             users[room] = 1;
             votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
         }
-	console.log('JOINED '+room+' VOTES:'+votes[room]);
-        socket.set('room', room);
-	socket.join(room);
 
+	console.log('JOINED '+room+' VOTES:'+votes[room]);
+        socket.set('room', room);    // set the room var so we can join in later
+	socket.join(room);           // actually join the room
+
+        // update votes/users info for everyone in the room
         io.sockets.in(room).emit('votes', votes[room]);
 	io.sockets.in(room).emit('users', users[room]);
         
@@ -135,11 +141,18 @@ function playNextSong(room){
         var songInfoRaw = curQ.shift();
         var songInfo = JSON.parse(songInfoRaw);
 
-
 	io.sockets.in(room).emit('changeSong', songInfo.track.href);
+             
+	// Set votes in the room to be all neutral
 	votes[room]['good'] = 0;
 	votes[room]['neutral'] = users[room];
 	votes[room]['bad'] = 0;
+
+        // Reset client votes from room to be neutral
+        var room_clients = io.sockets.clients(room);
+        room_clients.forEach(function(room_client) {
+		clients[room_client].vote = 'neutral';           
+	});
 
         io.sockets.in(room).emit('votes', votes[room]);
 
