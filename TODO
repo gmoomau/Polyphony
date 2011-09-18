@@ -1,5 +1,4 @@
 playlist history
-separate into different rooms
 add chat
 voting
 song selection modes (queue, cycle through djs, ...)
@@ -13,6 +12,7 @@ refactor code
 playlist support?
 recommendations
 
+check song availability
 
 memcached
 redis

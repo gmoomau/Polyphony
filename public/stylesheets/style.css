@@ -37,6 +37,16 @@ a {
     float: left;
 }
 
+#chatHistory{
+    overflow: scroll;
+    width: 600px;
+    height: 200px;
+}
+
+#chat{
+    float:left;
+}
+
 .selectedVote {
     color: #000000;
 }

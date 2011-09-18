@@ -111,6 +111,16 @@ io.sockets.on('connection', function(socket){
         });
     });
 
+    socket.on('chat name', function(name) {
+	    clients[socket].name = name;
+	});
+
+    socket.on('chat message', function(msg) {
+        socket.get('room', function(err,room) {
+		io.sockets.in(room).emit('chat', clients[socket].name, msg+'<p>');
+	    });
+	});
+
     // join a user to a given room
     socket.on('join room', function(room) {
         if (room in users){  // if the room already exists, increment counts

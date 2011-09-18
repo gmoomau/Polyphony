@@ -53,6 +53,11 @@ script
        socket.emit('disconnect');
     });      
 
+    socket.on('chat', function(name,msg) {
+       $("#chatHistory").append(name+":"+msg);
+       $("#chatHistory").prop("scrollTop",$("#chatHistory").prop("scrollHeight"));
+    });
+
     // add song to server queue
     $("#sub").click(function(e){
       e.preventDefault();
@@ -86,6 +91,27 @@ script
      $("#songSearch").val('');
   });
 
+  $("#chatNameSubmit").click(function(e) {
+     var newName = $("#chatNameSet").val();
+     $("#chatName").text(newName);
+     $("#chatNameSet").val('');
+     socket.emit('chat name',newName);
+  });
+  
+  $("#chatMessage").keypress(function(e) {
+     if(e.which == 13) {  // on enter key
+        if($("#chatName").text() != '') {
+          var message = $("#chatMessage").val();
+          if (message != '') {
+            $("#chatMessage").val('');
+            socket.emit('chat message', message);
+          }
+        }
+        else {
+           alert("Please set a name before messaging");
+        }
+     }
+  });
 
     $("#songSearch").keyup(function(e){
        var songName = $("#songSearch").val();
@@ -129,8 +155,8 @@ body
   #people
     p Listening to: #{room}
     p#users #{actives} people currently connected
-  #search
-    input#songSearch(type="text", value="Search for a song")
+  #search Search:
+    input#songSearch(type="text", value="Enter song/artist name")
     #results
   #songStuff
     table#voteSongs(width="60%",)
@@ -149,7 +175,17 @@ body
           input#playItOff(type="submit", value="next song")
     h5 Songs
     #queue
-
+  p
+  #chat     
+    p Currently you are:
+     #chatName
+    p 
+    p Change your name:
+    input#chatNameSet(type="text")
+    input#chatNameSubmit(type="button",value="Set Name")
+    #chatHistory
+    p Message:
+    input#chatMessage(type="text")
   iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
 
 
