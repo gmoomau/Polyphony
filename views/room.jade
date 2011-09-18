@@ -82,9 +82,15 @@ script
       setVoteColor('bad');
     });		
 
-    $("#searchButton").click(function(e){
+  $("#songSearch").click(function(e) {
+     $("#songSearch").val('');
+  });
+
+
+    $("#songSearch").keyup(function(e){
        var songName = $("#songSearch").val();
-       $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
+       if (songName.length > 0) {
+        $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
          function(rawData) {
              var results = jQuery.parseJSON(rawData);
              var count = 0;
@@ -98,6 +104,10 @@ script
              });
 
          }, 'text');
+       }
+       else {
+          $("#results").text('');
+       }
     });
 
   });
@@ -121,7 +131,6 @@ body
     p#users #{actives} people currently connected
   #search
     input#songSearch(type="text", value="Search for a song")
-    input#searchButton(type="button", value="Search")
     #results
   #songStuff
     table#voteSongs(width="60%",)
