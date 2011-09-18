@@ -32,8 +32,7 @@ app.configure('production', function(){
 // Routes
 app.get('/', function(req, res){
   res.render('index', {
-    title: 'sup son',
-    actives: 0
+    title: 'sup son'
   });
 });
 
@@ -152,35 +151,14 @@ io.sockets.on('connection', function(socket){
       votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
     }
 
-  console.log('JOINED '+room+' VOTES:'+votes[room]);
-  socket.set('room', room);    // set the room var so we can join in later
-  socket.join(room);           // actually join the room
+    console.log('JOINED '+room+' VOTES:'+votes[room]);
+    socket.set('room', room);    // set the room var so we can join in later
+    socket.join(room);           // actually join the room
 
-  // update votes/users info for everyone in the room
-  io.sockets.in(room).emit('votes', votes[room]);
-  io.sockets.in(room).emit('users', users[room]);
-  io.sockets.in(room).emit('chat', 'system', ' new user connected <p>');
-
-  });
-
-  // join a user to a given room
-  socket.on('join room', function(room) {
-    if (room in users){  // if the room already exists, increment counts
-      users[room]++;
-      votes[room]['neutral']++;
-    }
-    else {   // otherwise we have to set the counts
-      users[room] = 1;
-      votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
-    }
-
-  console.log('JOINED '+room+' VOTES:'+votes[room]);
-  socket.set('room', room);    // set the room var so we can join in later
-  socket.join(room);           // actually join the room
-
-  // update votes/users info for everyone in the room
-  io.sockets.in(room).emit('votes', votes[room]);
-  io.sockets.in(room).emit('users', users[room]);
+    // update votes/users info for everyone in the room
+    io.sockets.in(room).emit('votes', votes[room]);
+    io.sockets.in(room).emit('users', users[room]);
+    io.sockets.in(room).emit('chat', 'system', ' new user connected');
 
   });
 
@@ -203,7 +181,7 @@ function playNextSong(room){
     // Reset client votes from room to be neutral
     var room_clients = io.sockets.clients(room);
     room_clients.forEach(function(room_client) {
-      clients[room_client].vote = 'neutral';           
+      clients[room_client.id].vote = 'neutral';           
     });
 
     io.sockets.in(room).emit('votes', votes[room]);
