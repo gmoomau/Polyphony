@@ -153,46 +153,45 @@ io.sockets.on('connection', function(socket){
   io.sockets.in(room).emit('chat', 'system', ' new user connected <p>');
 
   });
-});
 
-socket.on('chat name', function(name) {
-  try{
-    if(check(name).isAlphanumeric()){
-      clients[socket].name = name;
+  socket.on('chat name', function(name) {
+    try{
+      if(check(name).isAlphanumeric()){
+        clients[socket.id].name = name;
+      }
     }
-  }
-  catch (e){
-    clients[socket].name = generateName("hax0r");
-  }
-});
-
-socket.on('chat message', function(msg) {
-  socket.get('room', function(err,room) {
-    var cleaned = sanitize(msg).xss();
-    io.sockets.in(room).emit('chat', clients[socket].name, cleaned);
+    catch (e){
+      clients[socket.id].name = generateName("hax0r");
+    }
   });
-});
 
-// join a user to a given room
-socket.on('join room', function(room) {
-  if (room in users){  // if the room already exists, increment counts
-    users[room]++;
-    votes[room]['neutral']++;
-  }
-  else {   // otherwise we have to set the counts
-    users[room] = 1;
-    votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
-  }
+  socket.on('chat message', function(msg) {
+    socket.get('room', function(err,room) {
+      var cleaned = sanitize(msg).xss();
+      io.sockets.in(room).emit('chat', clients[socket].name, cleaned);
+    });
+  });
 
-console.log('JOINED '+room+' VOTES:'+votes[room]);
-socket.set('room', room);    // set the room var so we can join in later
-socket.join(room);           // actually join the room
+  // join a user to a given room
+  socket.on('join room', function(room) {
+    if (room in users){  // if the room already exists, increment counts
+      users[room]++;
+      votes[room]['neutral']++;
+    }
+    else {   // otherwise we have to set the counts
+      users[room] = 1;
+      votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
+    }
 
-// update votes/users info for everyone in the room
-io.sockets.in(room).emit('votes', votes[room]);
-io.sockets.in(room).emit('users', users[room]);
+  console.log('JOINED '+room+' VOTES:'+votes[room]);
+  socket.set('room', room);    // set the room var so we can join in later
+  socket.join(room);           // actually join the room
 
-});
+  // update votes/users info for everyone in the room
+  io.sockets.in(room).emit('votes', votes[room]);
+  io.sockets.in(room).emit('users', users[room]);
+
+  });
 
 });
 
@@ -229,7 +228,7 @@ function generateName(base) {
   var name = base;
   for(var i = 0;i<5;i++) {
     var rnum = Math.floor(Math.random()*chars.length);
-    name += chars[rnum]
+    name += chars[rnum];
   }
   return name;
 }
@@ -237,3 +236,4 @@ function generateName(base) {
 var port = process.env.PORT || 3000;
 app.listen(port);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+
