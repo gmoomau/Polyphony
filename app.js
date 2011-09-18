@@ -67,9 +67,8 @@ io.sockets.on('connection', function(socket){
         spotify.apiLookup(song, function(songInfo){
             curQ.push(songInfo);
             socket.get('room', function(err,room) {
-                 io.sockets.in(room).emit('votes', votes[room]);
                  io.sockets.in(room).emit('songForList', songInfo);
-                 console.log("curQ is: " + curQ);
+                 console.log("\n******curQ is: " + curQ);
             });
         });
     });
@@ -78,7 +77,9 @@ io.sockets.on('connection', function(socket){
         if(curTimeout != null){
             clearTimeout(curTimeout);
         }
-        playNextSong();
+        socket.get('room', function(err,room) {
+          playNextSong(room);
+	});
     });
 
     socket.on('vote', function(vote) {
@@ -127,22 +128,21 @@ io.sockets.on('connection', function(socket){
 
 // song starting function
 var curTimeout = null;
-function playNextSong(){
+function playNextSong(room){
     if(curQ.length > 0){    
         var songInfoRaw = curQ.shift();
         var songInfo = JSON.parse(songInfoRaw);
 
-        socket.get('room', function(err,room) {
-            io.sockets.in(room).emit('changeSong', songInfo.track.href);
-            votes[room]['good'] = 0;
-            votes[room]['neutral'] = users[room];
-            votes[room]['bad'] = 0;
-        });
+
+	io.sockets.in(room).emit('changeSong', songInfo.track.href);
+	votes[room]['good'] = 0;
+	votes[room]['neutral'] = users[room];
+	votes[room]['bad'] = 0;
 
         io.sockets.in(room).emit('votes', votes[room]);
 
         curTimeout = setTimeout(function(){
-            playNextSong();
+            playNextSong(room);
         }, songInfo.track.length*1000);
     }
 }
