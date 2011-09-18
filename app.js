@@ -53,10 +53,12 @@ var votes = {};          // indexed by room then 'good', 'neutral', 'bad'
 var users = {};          // keeps track of user count per room
 var clients = [];        // keeps track of info per socket
 
+
 io.sockets.on('connection', function(socket){
   console.log("new client connected");
 
-  clients[socket] = {vote : 'neutral'};
+  clients[socket.id] = {vote : 'neutral', name : generateName("anon")};
+  socket.emit('name', clients[socket.id].name);
 
   // send current queue to client
   curQ.forEach(function(item){
@@ -86,14 +88,14 @@ io.sockets.on('connection', function(socket){
 
   // User changed vote
   socket.on('vote', function(vote) {
-    var prev = clients[socket].vote;
+    var prev = clients[socket.id].vote;
 
     if (prev != vote) {  // ignore if they vote for the same thing
       socket.get('room', function(err,room) { // get room from socket
         console.log(votes[room][prev]);
         votes[room][prev] -= 1;
         votes[room][vote] += 1;
-        clients[socket].vote = vote;
+        clients[socket.id].vote = vote;
         io.sockets.in(room).emit('votes', votes[room]);
       });
     }
@@ -101,11 +103,11 @@ io.sockets.on('connection', function(socket){
 
   // when user disconnects, we have to decrement users and votes
   socket.on('disconnect', function() {
-    votes[clients[socket].vote] -= 1;
+    votes[clients[socket.id].vote] -= 1;
     socket.get('room', function(err,room) {
       if(room != null && room in users) { 
         users[room]--;
-        votes[room][clients[socket].vote]--;
+        votes[room][clients[socket.id].vote]--;
         io.sockets.in(room).emit('votes', votes[room]);
         io.sockets.in(room).emit('users', users[room]);
         // maybe get rid of room from the users/votes hashes if no one's in them?
@@ -114,20 +116,19 @@ io.sockets.on('connection', function(socket){
   });
 
   socket.on('chat name', function(name) {
-    try{
-      if(check(name).isAlphanumeric()){
-        clients[socket].name = name;
-      }
-    }
-    catch (e){
-      clients[socket].name = "hax0r";
-    }
+    console.log("****"+socket+"--"+clients[socket.id] +'\n');
+
+    socket.get('room', function(err, room) {
+      io.sockets.in(room).emit('chat', 'system', ' '+clients[socket.id].name+' set name to '+name+'<p>');
+      clients[socket.id].name = name;
+    });
   });
 
   socket.on('chat message', function(msg) {
+    var name = clients[socket.id].name;
+    console.log(clients[socket.id]);
     socket.get('room', function(err,room) {
-      var cleaned = sanitize(msg).xss();
-      io.sockets.in(room).emit('chat', clients[socket].name, cleaned);
+      io.sockets.in(room).emit('chat', name, msg+'<p>');
     });
   });
 
@@ -149,8 +150,49 @@ io.sockets.on('connection', function(socket){
   // update votes/users info for everyone in the room
   io.sockets.in(room).emit('votes', votes[room]);
   io.sockets.in(room).emit('users', users[room]);
+  io.sockets.in(room).emit('chat', 'system', ' new user connected <p>');
 
   });
+});
+
+socket.on('chat name', function(name) {
+  try{
+    if(check(name).isAlphanumeric()){
+      clients[socket].name = name;
+    }
+  }
+  catch (e){
+    clients[socket].name = generateName("hax0r");
+  }
+});
+
+socket.on('chat message', function(msg) {
+  socket.get('room', function(err,room) {
+    var cleaned = sanitize(msg).xss();
+    io.sockets.in(room).emit('chat', clients[socket].name, cleaned);
+  });
+});
+
+// join a user to a given room
+socket.on('join room', function(room) {
+  if (room in users){  // if the room already exists, increment counts
+    users[room]++;
+    votes[room]['neutral']++;
+  }
+  else {   // otherwise we have to set the counts
+    users[room] = 1;
+    votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
+  }
+
+console.log('JOINED '+room+' VOTES:'+votes[room]);
+socket.set('room', room);    // set the room var so we can join in later
+socket.join(room);           // actually join the room
+
+// update votes/users info for everyone in the room
+io.sockets.in(room).emit('votes', votes[room]);
+io.sockets.in(room).emit('users', users[room]);
+
+});
 
 });
 
@@ -180,6 +222,16 @@ function playNextSong(room){
       playNextSong(room);
     }, songInfo.track.length*1000);
   }
+}
+
+function generateName(base) {
+  var chars = '0123456789';
+  var name = base;
+  for(var i = 0;i<5;i++) {
+    var rnum = Math.floor(Math.random()*chars.length);
+    name += chars[rnum]
+  }
+  return name;
 }
 
 var port = process.env.PORT || 3000;
