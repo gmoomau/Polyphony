@@ -124,7 +124,7 @@ io.sockets.on('connection', function(socket){
     catch (e){
       name = generateName("hax0r");
     }
-
+    socket.emit('name', name);
     socket.get('room', function(err, room) {
       io.sockets.in(room).emit('chat', 'system', clients[socket.id].name+' set name to '+name);
       clients[socket.id].name = name;

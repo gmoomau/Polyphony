@@ -102,7 +102,6 @@ script
 
   $("#chatNameSubmit").click(function(e) {
      var newName = $("#chatNameSet").val();
-     $("#chatName").text(newName);
      $("#chatNameSet").val('');
      socket.emit('chat name',newName);
   });
