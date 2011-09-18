@@ -101,7 +101,9 @@ io.sockets.on('connection', function(socket){
         socket.get('room', function(err,room) {
           if(room != null && room in users) { 
                users[room]--;
+               votes[room][clients[socket].vote]--;
                io.sockets.in(room).emit('votes', votes[room]);
+               io.sockets.in(room).emit('users', users[room]);
           }
         });
     });
