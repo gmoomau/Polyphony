@@ -82,8 +82,30 @@ script
       setVoteColor('bad');
     });		
 
+    $("#searchButton").click(function(e){
+       var songName = $("#songSearch").val();
+       $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
+         function(rawData) {
+             var results = jQuery.parseJSON(rawData);
+             var count = 0;
+             $("#results").text('');
+             results.tracks.forEach(function(track) {
+                  if (count < 5) {
+                     var toAdd = track.artists[0].name + ' - '+track.name;
+                     $("#results").append('<p onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
+                     count++;
+                  }
+             });
+
+         }, 'text');
+    });
+
   });
   
+  function setAddText(text) {
+    $("#uri").val(text);
+  }
+
   function setVoteColor(selected) {
      if (prevVote != '') {
         $("#"+prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
@@ -97,6 +119,10 @@ body
   #people
     p Listening to: #{room}
     p#users #{actives} people currently connected
+  #search
+    input#songSearch(type="text", value="Search for a song")
+    input#searchButton(type="button", value="Search")
+    #results
   #songStuff
     table#voteSongs(width="60%",)
         tr
