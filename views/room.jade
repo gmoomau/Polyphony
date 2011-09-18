@@ -16,7 +16,7 @@ script
 
     socket.on('msg', function(data){
       console.log(data);
-      });
+    });
 
     socket.on('changeSong', function(songURI){
       setVoteColor('neutral');      
@@ -54,7 +54,7 @@ script
     });      
 
     socket.on('chat', function(name,msg) {
-       $("#chatHistory").append(name+":"+msg);
+       $("#chatHistory").append("<p>"+name+": "+msg+"</p>");
        $("#chatHistory").prop("scrollTop",$("#chatHistory").prop("scrollHeight"));
     });
 
