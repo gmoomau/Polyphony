@@ -51,10 +51,13 @@ var votes = {};          // indexed by room then 'good', 'neutral', 'bad'
 var users = {};          // keeps track of user count per room
 var clients = [];        // keeps track of info per socket
 
+
 io.sockets.on('connection', function(socket){
     console.log("new client connected");
 
-    clients[socket] = {vote : 'neutral'};
+    clients[socket.id] = {vote : 'neutral', name : generateName()};
+
+    socket.emit('name', clients[socket.id].name);
 
     // send current queue to client
     curQ.forEach(function(item){
@@ -84,14 +87,14 @@ io.sockets.on('connection', function(socket){
 
     // User changed vote
     socket.on('vote', function(vote) {
-	var prev = clients[socket].vote;
+	var prev = clients[socket.id].vote;
         
 	if (prev != vote) {  // ignore if they vote for the same thing
             socket.get('room', function(err,room) { // get room from socket
                console.log(votes[room][prev]);
                votes[room][prev] -= 1;
                votes[room][vote] += 1;
-               clients[socket].vote = vote;
+               clients[socket.id].vote = vote;
                io.sockets.in(room).emit('votes', votes[room]);
 		});
         }
@@ -99,11 +102,11 @@ io.sockets.on('connection', function(socket){
 
     // when user disconnects, we have to decrement users and votes
     socket.on('disconnect', function() {
-	votes[clients[socket].vote] -= 1;
+	votes[clients[socket.id].vote] -= 1;
         socket.get('room', function(err,room) {
           if(room != null && room in users) { 
                users[room]--;
-               votes[room][clients[socket].vote]--;
+               votes[room][clients[socket.id].vote]--;
                io.sockets.in(room).emit('votes', votes[room]);
                io.sockets.in(room).emit('users', users[room]);
                // maybe get rid of room from the users/votes hashes if no one's in them?
@@ -112,12 +115,19 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('chat name', function(name) {
-	    clients[socket].name = name;
+               console.log("****"+socket+"--"+clients[socket.id] +'\n');
+
+            socket.get('room', function(err, room) {
+               io.sockets.in(room).emit('chat', 'system', ' '+clients[socket.id].name+' set name to '+name+'<p>');
+               clients[socket.id].name = name;
+		});
 	});
 
     socket.on('chat message', function(msg) {
+        var name = clients[socket.id].name;
+	console.log(clients[socket.id]);
         socket.get('room', function(err,room) {
-		io.sockets.in(room).emit('chat', clients[socket].name, msg+'<p>');
+		io.sockets.in(room).emit('chat', name, msg+'<p>');
 	    });
 	});
 
@@ -139,6 +149,7 @@ io.sockets.on('connection', function(socket){
         // update votes/users info for everyone in the room
         io.sockets.in(room).emit('votes', votes[room]);
 	io.sockets.in(room).emit('users', users[room]);
+        io.sockets.in(room).emit('chat', 'system', ' new user connected <p>');
         
     });
  
@@ -170,6 +181,16 @@ function playNextSong(room){
             playNextSong(room);
         }, songInfo.track.length*1000);
     }
+}
+
+function generateName() {
+    var chars = '0123456789';
+    var name = 'anon';
+    for(var i = 0;i<5;i++) {
+	var rnum = Math.floor(Math.random()*chars.length);
+       name += chars[rnum]
+    }
+    return name;
 }
 
 var port = process.env.PORT || 3000;

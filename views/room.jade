@@ -53,8 +53,17 @@ script
        socket.emit('disconnect');
     });      
 
+    socket.on('name', function(name) {
+       $("#chatName").text(name);
+    });
+
     socket.on('chat', function(name,msg) {
-       $("#chatHistory").append(name+":"+msg);
+       if (name == 'system') {
+          $("#chatHistory").append(msg);
+       } 
+       else {
+          $("#chatHistory").append(name+": "+msg);
+       }
        $("#chatHistory").prop("scrollTop",$("#chatHistory").prop("scrollHeight"));
     });
 
@@ -100,16 +109,11 @@ script
   
   $("#chatMessage").keypress(function(e) {
      if(e.which == 13) {  // on enter key
-        if($("#chatName").text() != '') {
           var message = $("#chatMessage").val();
           if (message != '') {
             $("#chatMessage").val('');
             socket.emit('chat message', message);
           }
-        }
-        else {
-           alert("Please set a name before messaging");
-        }
      }
   });
 
