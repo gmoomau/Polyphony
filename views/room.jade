@@ -168,7 +168,9 @@ script
     }
 
     start += 5;
-    addHtml += '<p onClick="displaySearchResults('+start+')">More</p>';
+    if(addHtml != ''){
+      addHtml += '<p onClick="displaySearchResults('+start+')">More</p>';
+    } 
 
     if($("#results").html()=== ''){
       $(addHtml).hide().appendTo("#results").slideDown("slow");
