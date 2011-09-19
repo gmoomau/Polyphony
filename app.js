@@ -66,9 +66,14 @@ io.sockets.on('connection', function(socket){
     // if song is valid, get info
     spotify.apiLookup(song, function(songInfo){
       socket.get('room', function(err,room) {
-        curQ[room].push(songInfo);
-        io.sockets.in(room).emit('songForList', songInfo);
-        console.log("\n******curQ is: " + curQ[room]);
+        if(err){
+          console.log(err);
+        }
+        else{
+          curQ[room].push(songInfo);
+          io.sockets.in(room).emit('songForList', songInfo);
+          console.log("\n******curQ is: " + curQ[room]);
+        }
       });
     });
   });

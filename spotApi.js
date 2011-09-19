@@ -21,19 +21,21 @@ this.apiLookup = function(uri, cb){
                 {'host': 'ws.spotify.com'});
         spotReq.end();
         spotReq.on('response', function(response){
+          if(response.statusCode == 200){
             console.log('STATUS: ' + response.statusCode);
             response.setEncoding('utf8');
             response.on('data', function(chunk){
-                uriInfoRaw += chunk;
+              uriInfoRaw += chunk;
             });
             response.on('end', function(){
-                cb(uriInfoRaw);
+              cb(uriInfoRaw);
             });
+          }
         });
     }
     else{
 //        return null;
-        console.log("invalid uri");
+        console.log("invalid uri: " + uri);
     }
 
 }
