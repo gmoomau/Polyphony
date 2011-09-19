@@ -7,6 +7,7 @@ script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js")
 script
   var prevVote = 'neutral';
   var room = '#{room}';
+  var results;
   //script('http://cdn.socket.io/stable/socket.io.js')
   $(function(){
 
@@ -125,19 +126,10 @@ script
        if (songName.length > 0) {
         $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
          function(rawData) {
-             var results = jQuery.parseJSON(rawData);
-             var count = 0;
-             $("#results").text('');
-             results.tracks.forEach(function(track) {
-                  if (count < 5) {
-                     var toAdd = track.artists[0].name + ' - '+track.name;
-                     $("#results").append('<p onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
-                     count++;
-                  }
-             });
-
+             results = jQuery.parseJSON(rawData);
+             displaySearchResults(0);
          }, 'text');
-       }
+       }  // end if songName > 0
        else {
           $("#results").text('');
        }
@@ -145,6 +137,20 @@ script
 
   });
   
+  // Displays results starting at a given value
+  function displaySearchResults(start) {
+           var count = 0;
+           $("#results").text('');         
+           for(count=start;count < start + 5; count++) {
+             if (count < results.tracks.length) {
+               var track = results.tracks[count];
+                     var toAdd = track.artists[0].name + ' - '+track.name;
+                     $("#results").append('<p onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
+             }
+           }
+           $("#results").append('<p onClick="displaySearchResults('+start+5+')">More</p>');
+  }
+
   function setAddText(text) {
     $("#uri").val(text);
   }
