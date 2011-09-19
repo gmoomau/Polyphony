@@ -148,7 +148,7 @@ script
   // Displays results starting at a given value
   function displaySearchResults(start) {
     var count = 0;  // how many things we've added
-    $("#results").text('');         
+    //$("#results").text('');         
     var addHtml = '';
     for(var i=start;count < 5 && i<results.tracks.length; i++) {
       var track = results.tracks[i];
@@ -162,15 +162,20 @@ script
       if (!found[artist+song]) {
         var toAdd = artist + ' - '+song;
         addHtml += '<p class="'+regionClass+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>';
-        //$("#results").append('<p class="'+regionClass+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
         count++;
         found[artist+song] = true;
       }
     }
-    $().clearQueue();
-    $(addHtml).hide().appendTo("#results").slideDown("slow");
+
     start += 5;
-    $("#results").append('<p onClick="displaySearchResults('+start+')">More</p>');
+    addHtml += '<p onClick="displaySearchResults('+start+')">More</p>';
+
+    if($("#results").html()=== ''){
+      $(addHtml).hide().appendTo("#results").slideDown("slow");
+    }
+    else{
+      $("#results").html(addHtml);
+    }
   }
 
   function setAddText(text) {
