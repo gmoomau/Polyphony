@@ -7,63 +7,86 @@ a {
   color: #00B7FF;
 }
 
+input {
+  margin-left: 10px;
+}
+
+#container {
+  position: relative;
+}
+
+.box {
+  border-radius: 10px;
+  padding: 5px;
+  margin: 5px;
+  background: #000000;
+  color: #C0C0C0;
+}
+
 #songStuff {
-    float:right;
-    background: #000000;
-    border-radius: 10px;
-    color: #C0C0C0;
+  float:right;
 }
 
 #inputSongs {
-    padding: 5px;
 }
+
 #queue {
-    padding: 5px;
 }
 
 #goodSong {
-    background: #00DD00;
+  background: #00DD00;
 }
 
 #neutralSong {
-    background: #BBBBBB;
+  background: #BBBBBB;
 }
 
 #badSong {
-    background: #DD0000;
+  background: #DD0000;
 }
 
 #search{
-    float: left;
-    width: 200px;
+  float: left;
+  width: 200px;
 }
 
 #chatHistory{
-    overflow-y: auto;
-    word-wrap: break-word;
-    float: left
-    width: 600px;
-    height: 200px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  float: left
+  width: 100%;
+  height: 200px;
+  border: 10px;
+  border-radius: 10px;
+  margin: 5px;
+  padding: 5px;
+  background: #FFFFFF;
+  color: #000000;
 }
 
 #chat{
-    float:left;
+  float:left;
+  width: 600px;
+}
+
+#chatMessage {
+  width: 75%;
 }
 
 .selectedVote {
-    color: #000000;
+  color: #000000;
 }
 
 .nonselectedVote {
-    color: #888888;
+  color: #888888;
 }
 
 .comingUp {
-    color: #C0C0C0;
+  color: #C0C0C0;
 }
 .alreadyPlayed {
-    color: #808080;
+  color: #808080;
 }
 .currentlyPlaying {
-    color: #FFFFFF;
+  color: #FFFFFF;
 }

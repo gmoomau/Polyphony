@@ -154,15 +154,15 @@ script
   };
 
 body   
-
-  #people
-    p Listening to: #{room}
-    p#users #{actives} people currently connected
-  #search Search:
-    input#songSearch(type="text", value="Enter song/artist name")
-    #results
-  #songStuff
-    table#voteSongs(width="60%",)
+  #container
+    #people
+      p Listening to: #{room}
+      p#users #{actives} people currently connected
+    #search.box Search:
+      input#songSearch(type="text", value="Enter song/artist name")
+      #results
+    #songStuff.box
+      table#voteSongs(width="60%",)
         tr
           td Like: 
             input#goodSong.nonselectedVote(type="button", value="0")
@@ -170,24 +170,23 @@ body
             input#neutralSong.selectedVote(type="button", value="0")
           td Skip: 
             input#badSong.nonselectedVote(type="button", value="0")
-    #inputSongs
-      form#uriForm
-        input#uri(type="text", size ="20" )
-        input#sub(type="submit", value="add")
-        form#next
-          input#playItOff(type="submit", value="next song")
-    h5 Songs
-    #queue
-  #chat     
-    p Currently you are:
-     #chatName
-    p 
-    p Change your name:
-    input#chatNameSet(type="text")
-    input#chatNameSubmit(type="button",value="Set Name")
-    #chatHistory
-    p Message:
-    input#chatMessage(type="text")
+      #inputSongs
+        form#uriForm
+          input#uri(type="text", size ="20" )
+          input#sub(type="submit", value="add")
+          form#next
+            input#playItOff(type="submit", value="next song")
+      h5 Songs
+      #queue
+    #chat.box     
+      p Currently you are:
+        #chatName
+      p Change your name:
+        input#chatNameSet(type="text")
+        input#chatNameSubmit(type="button",value="Set Name")
+      #chatHistory
+      p Message:
+        input#chatMessage(type="text")
   iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
 
 
