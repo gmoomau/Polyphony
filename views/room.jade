@@ -38,8 +38,9 @@ script
 
     socket.on('songForList', function(songInfoRaw){
       var songInfo = jQuery.parseJSON(songInfoRaw);
-      var trackStr = songInfo.track.artists[0].name + " - " + songInfo.track.name;
-      $("#queue").append("<p class='comingUp'>"+trackStr+"</p>");
+      var trackStr = "<p class='comingUp'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name+"</p>";
+      $(trackStr).hide().appendTo("#queue").slideDown('slow');
+      // $("#queue").append(trackStr);
     });
 
     socket.on('votes', function(voteRecords){
@@ -148,6 +149,7 @@ script
   function displaySearchResults(start) {
     var count = 0;  // how many things we've added
     $("#results").text('');         
+    var addHtml = '';
     for(var i=start;count < 5 && i<results.tracks.length; i++) {
       var track = results.tracks[i];
       var availability = track.album.availability.territories;
@@ -159,11 +161,13 @@ script
       var song = track.name;
       if (!found[artist+song]) {
         var toAdd = artist + ' - '+song;
-        $("#results").append('<p class="'+regionClass+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
+        addHtml += '<p class="'+regionClass+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>';
+        //$("#results").append('<p class="'+regionClass+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
         count++;
         found[artist+song] = true;
       }
     }
+    $(addHtml).hide().appendTo("#results").slideDown("slow");
     start += 5;
     $("#results").append('<p onClick="displaySearchResults('+start+')">More</p>');
   }
