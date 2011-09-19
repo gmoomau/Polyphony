@@ -73,6 +73,10 @@ input {
   width: 75%;
 }
 
+.unavailable{
+    color: #880000;
+}
+
 .selectedVote {
   color: #000000;
 }

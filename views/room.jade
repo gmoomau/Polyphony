@@ -7,6 +7,9 @@ script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js")
 script
   var prevVote = 'neutral';
   var room = '#{room}';
+  var results;
+  var prevSearch;
+  var found;
   //script('http://cdn.socket.io/stable/socket.io.js')
   $(function(){
 
@@ -55,6 +58,10 @@ script
 
     socket.on('name', function(name) {
        $("#chatName").text(name);
+    });
+
+    socket.on('name repeat', function(name) {
+       alert("Sorry the name '"+name+"' is already taken");
     });
 
     socket.on('chat', function(name,msg) {
@@ -119,21 +126,16 @@ script
     $("#songSearch").keyup(function(e){
        var songName = $("#songSearch").val();
        if (songName.length > 0) {
-        $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
-         function(rawData) {
-             var results = jQuery.parseJSON(rawData);
-             var count = 0;
-             $("#results").text('');
-             results.tracks.forEach(function(track) {
-                  if (count < 5) {
-                     var toAdd = track.artists[0].name + ' - '+track.name;
-                     $("#results").append('<p onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
-                     count++;
-                  }
-             });
-
-         }, 'text');
-       }
+        if (songName != prevSearch) {
+          prevSearch = songName;
+          $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
+           function(rawData) {
+               results = jQuery.parseJSON(rawData);
+               found = {};
+               displaySearchResults(0);
+           }, 'text');
+          }
+       }  // end if songName > 0
        else {
           $("#results").text('');
        }
@@ -141,6 +143,30 @@ script
 
   });
   
+  // Displays results starting at a given value
+  function displaySearchResults(start) {
+           var count = 0;  // how many things we've added
+           $("#results").text('');         
+           for(var i=start;count < 5 && i<results.tracks.length; i++) {
+               var track = results.tracks[i];
+               var availability = track.album.availability.territories;
+               var class = '';
+               if (availability.indexOf('US') < 0) { // only show things available in US
+                 class = 'unavailable';
+               }
+                 var artist = track.artists[0].name;
+                 var song = track.name;
+                 if (!found[artist+song]) {
+                   var toAdd = artist + ' - '+song;
+                   $("#results").append('<p class="'+class+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
+                   count++;
+                   found[artist+song] = true;
+                 }
+           }
+           start += 5;
+           $("#results").append('<p onClick="displaySearchResults('+start+')">More</p>');
+  }
+
   function setAddText(text) {
     $("#uri").val(text);
   }
