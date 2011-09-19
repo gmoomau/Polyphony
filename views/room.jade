@@ -57,7 +57,7 @@ script
     });      
 
     socket.on('name', function(name) {
-       $("#chatName").text(name);
+       $("#chatName").text(name+":");
     });
 
     socket.on('name repeat', function(name) {
@@ -182,12 +182,14 @@ script
 
 body   
   #container
-    #people
-      p Listening to: #{room}
-      p#users #{actives} people currently connected
-    #search.box Search:
-      input#songSearch(type="text", value="Enter song/artist name")
-      #results
+    #chat.box     
+      p Change your name:
+        input#chatNameSet(type="text")
+        input#chatNameSubmit(type="button",value="Set Name")
+      #chatHistory
+      p
+        span#chatName
+        input#chatMessage(type="text")
     #songStuff.box
       table#voteSongs(width="60%",)
         tr
@@ -205,14 +207,11 @@ body
             input#playItOff(type="submit", value="next song")
       h5 Songs
       #queue
-    #chat.box     
-      p Currently you are:
-        #chatName
-      p Change your name:
-        input#chatNameSet(type="text")
-        input#chatNameSubmit(type="button",value="Set Name")
-      #chatHistory
-      p Message:
-        input#chatMessage(type="text")
+    #search.box Search:
+      input#songSearch(type="text", value="Enter song/artist name")
+      #results
+    #people
+      p Listening to: #{room}
+      p#users #{actives} people currently connected
   iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
 

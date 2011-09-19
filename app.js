@@ -163,6 +163,11 @@ io.sockets.on('connection', function(socket){
       votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
       curQ[room] = [];
     }
+  
+    // send current song queue to user
+    for(song in curQ[room]){
+      socket.emit('songForList', curQ[room][song]);
+    }
 
   console.log('JOINED '+room+' VOTES:'+votes[room]);
 

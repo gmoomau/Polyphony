@@ -1,5 +1,5 @@
 body {
-  padding: 50px;
+  padding: 25px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
@@ -25,6 +25,7 @@ input {
 
 #songStuff {
   float:right;
+  width: 35%;
 }
 
 #inputSongs {
@@ -46,8 +47,8 @@ input {
 }
 
 #search{
-  float: left;
-  width: 200px;
+  float: right;
+  width: 35%;
 }
 
 #chatHistory{
@@ -55,7 +56,7 @@ input {
   word-wrap: break-word;
   float: left
   width: 100%;
-  height: 200px;
+  height: 350px;
   border: 10px;
   border-radius: 10px;
   margin: 5px;
@@ -65,12 +66,20 @@ input {
 }
 
 #chat{
-  float:left;
-  width: 600px;
+  float: left;
+  width: 60%;
 }
 
 #chatMessage {
   width: 75%;
+}
+
+#chatName {
+  font-weight: bold;
+}
+
+#people {
+  clear: both;
 }
 
 .unavailable{
