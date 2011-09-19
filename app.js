@@ -108,7 +108,7 @@ io.sockets.on('connection', function(socket){
         votes[room][clients[socket.id].vote]--;
         io.sockets.in(room).emit('votes', votes[room]);
         io.sockets.in(room).emit('users', users[room].length);
-	io.sockets.in(room).emit('chat', 'system', name+' left');
+        io.sockets.in(room).emit('chat', 'system', name+' left');
         // maybe get rid of room from the users/votes hashes if no one's in them?
       }
     });
@@ -126,17 +126,17 @@ io.sockets.on('connection', function(socket){
 
     socket.get('room', function(err, room) {
       if (room in users) {  // Check for repeat names
-	  if (users[room].indexOf(name) >= 0) {
-              socket.emit('name repeat', name);
-          }
-          else {   // Name not taken
-           removeFromArray(users[room], clients[socket.id].name);  // Remove old name
-           users[room].push(name);  
+        if (users[room].indexOf(name) >= 0) {
+          socket.emit('name repeat', name);
+        }
+        else {   // Name not taken
+          removeFromArray(users[room], clients[socket.id].name);  // Remove old name
+          users[room].push(name);  
 
-           io.sockets.in(room).emit('chat', 'system', clients[socket.id].name+' set name to '+name);
-           clients[socket.id].name = name;
-           socket.emit('name', name);
-          }
+          io.sockets.in(room).emit('chat', 'system', clients[socket.id].name+' set name to '+name);
+          clients[socket.id].name = name;
+          socket.emit('name', name);
+        }
       }
     });
 
@@ -147,7 +147,7 @@ io.sockets.on('connection', function(socket){
     var name = clients[socket.id].name;
 
     socket.get('room', function(err,room) {
-	    var cleaned = sanitize(msg).xss();  // Sanitize name
+      var cleaned = sanitize(msg).xss();  // Sanitize name
       io.sockets.in(room).emit('chat', name, cleaned);
     });
   });
@@ -217,8 +217,8 @@ function generateName(base) {
 }
 
 function removeFromArray(array, element) {
-    var idx = array.indexOf(element);
-    array.splice(idx, 1);
+  var idx = array.indexOf(element);
+  array.splice(idx, 1);
 }
 
 var port = process.env.PORT || 3000;

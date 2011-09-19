@@ -3,7 +3,7 @@ html
 head
 title sup #{room}
 script(src="socket.io/socket.io.js");
-script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js")
+script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js");
 script
   var prevVote = 'neutral';
   var room = '#{room}';
@@ -103,68 +103,69 @@ script
       setVoteColor('bad');
     });		
 
-  $("#songSearch").click(function(e) {
-     $("#songSearch").val('');
-  });
+    $("#songSearch").click(function(e) {
+      $("#songSearch").val('');
+    });
 
-  $("#chatNameSubmit").click(function(e) {
-     var newName = $("#chatNameSet").val();
-     $("#chatNameSet").val('');
-     socket.emit('chat name',newName);
-  });
+    $("#chatNameSubmit").click(function(e) {
+      var newName = $("#chatNameSet").val();
+      $("#chatNameSet").val('');
+      socket.emit('chat name',newName);
+    });
   
-  $("#chatMessage").keypress(function(e) {
-     if(e.which == 13) {  // on enter key
-          var message = $("#chatMessage").val();
-          if (message != '') {
-            $("#chatMessage").val('');
-            socket.emit('chat message', message);
-          }
-     }
-  });
+    $("#chatMessage").keypress(function(e) {
+      if(e.which == 13) {  // on enter key
+        var message = $("#chatMessage").val();
+        if (message != '') {
+          $("#chatMessage").val('');
+          socket.emit('chat message', message);
+        }
+      }
+    });
 
     $("#songSearch").keyup(function(e){
-       var songName = $("#songSearch").val();
-       if (songName.length > 0) {
+      var songName = $("#songSearch").val();
+      if (songName.length > 0) {
         if (songName != prevSearch) {
           prevSearch = songName;
           $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
-           function(rawData) {
-               results = jQuery.parseJSON(rawData);
-               found = {};
-               displaySearchResults(0);
-           }, 'text');
-          }
-       }  // end if songName > 0
-       else {
-          $("#results").text('');
-       }
+            function(rawData) {
+              results = jQuery.parseJSON(rawData);
+              found = {};
+              displaySearchResults(0);
+            },
+          'text');
+        }
+      }  // end if songName > 0
+      else {
+        $("#results").text('');
+      }
     });
 
   });
   
   // Displays results starting at a given value
   function displaySearchResults(start) {
-           var count = 0;  // how many things we've added
-           $("#results").text('');         
-           for(var i=start;count < 5 && i<results.tracks.length; i++) {
-               var track = results.tracks[i];
-               var availability = track.album.availability.territories;
-               var class = '';
-               if (availability.indexOf('US') < 0) { // only show things available in US
-                 class = 'unavailable';
-               }
-                 var artist = track.artists[0].name;
-                 var song = track.name;
-                 if (!found[artist+song]) {
-                   var toAdd = artist + ' - '+song;
-                   $("#results").append('<p class="'+class+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
-                   count++;
-                   found[artist+song] = true;
-                 }
-           }
-           start += 5;
-           $("#results").append('<p onClick="displaySearchResults('+start+')">More</p>');
+    var count = 0;  // how many things we've added
+    $("#results").text('');         
+    for(var i=start;count < 5 && i<results.tracks.length; i++) {
+      var track = results.tracks[i];
+      var availability = track.album.availability.territories;
+      var regionClass = '';
+      if (availability.indexOf('US') < 0) { // only show things available in US
+        regionClass = 'unavailable';
+      }
+      var artist = track.artists[0].name;
+      var song = track.name;
+      if (!found[artist+song]) {
+        var toAdd = artist + ' - '+song;
+        $("#results").append('<p class="'+regionClass+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>');
+        count++;
+        found[artist+song] = true;
+      }
+    }
+    start += 5;
+    $("#results").append('<p onClick="displaySearchResults('+start+')">More</p>');
   }
 
   function setAddText(text) {
@@ -172,11 +173,11 @@ script
   }
 
   function setVoteColor(selected) {
-     if (prevVote != '') {
-        $("#"+prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
-     }
-     $("#"+selected+"Song").attr('class', 'selectedVote');	
-     prevVote = selected;
+    if (prevVote != '') {
+      $("#"+prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
+    }
+    $("#"+selected+"Song").attr('class', 'selectedVote');	
+    prevVote = selected;
   };
 
 body   
@@ -214,7 +215,4 @@ body
       p Message:
         input#chatMessage(type="text")
   iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
-
-
-
 
