@@ -1,5 +1,4 @@
 playlist history
-add chat
 voting
 song selection modes (queue, cycle through djs, ...)
 
@@ -12,11 +11,8 @@ refactor code
 playlist support?
 recommendations
 
-check song availability
-
-unique-ify searches
-
-make user names unique
+make things look better
+  album art etc
 
 memcached
 redis
