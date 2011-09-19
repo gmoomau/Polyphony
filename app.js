@@ -118,7 +118,7 @@ io.sockets.on('connection', function(socket){
   socket.on('chat name', function(name) {
     // Sanitize name
     try{
-      check(name).regex('[a-zA-Z0-9 -_]+');
+      check(name).regex('[-a-zA-Z0-9 _]+');
     }
     catch (e){
       name = generateName("hax0r");
