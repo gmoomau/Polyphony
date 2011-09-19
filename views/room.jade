@@ -67,10 +67,10 @@ script
 
     socket.on('chat', function(name,msg) {
        if (name == 'system') {
-          $("#chatHistory").append("<p> "+msg+"</p>");
+          $("#chatHistory").append("<p><em> "+msg+"</em></p>");
        } 
        else {
-          $("#chatHistory").append("<p>"+name+": "+msg+"</p>");
+          $("#chatHistory").append("<p><strong>"+name+"</strong>: "+msg+"</p>");
        }
        $("#chatHistory").prop("scrollTop",$("#chatHistory").prop("scrollHeight"));
     });
@@ -218,10 +218,11 @@ body
       h5 Songs
       #queue
     #search.box Search:
-      input#songSearch(type="text", value="Enter song/artist name")
+      input#songSearch(type="text", size="30", value="Enter song/artist name")
       #results
     #people
       p Listening to: #{room}
       p#users #{actives} people currently connected
   iframe#loadSong(style="width:0px; height:0px; border: 0px", src="")
+  include footer
 

@@ -61,6 +61,7 @@ input {
   border-radius: 10px;
   margin: 5px;
   padding: 5px;
+  padding-top: 10px;
   background: #FFFFFF;
   color: #000000;
 }
@@ -102,4 +103,10 @@ input {
 }
 .currentlyPlaying {
   color: #FFFFFF;
+}
+
+#spotifyBranding {
+  clear: both;
+  font-size: small;
+  color: #808080;
 }
