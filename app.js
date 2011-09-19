@@ -127,7 +127,10 @@ io.sockets.on('connection', function(socket){
     socket.get('room', function(err, room) {
       if (room in users) {  // Check for repeat names
         if (users[room].indexOf(name) >= 0) {
-          socket.emit('name repeat', name);
+          socket.emit('name error', "Sorry, that name is already in use.");
+        }
+        else if (name.length >= 25) {
+          socket.emit('name error', "Your name must be less than 25 characters long.");
         }
         else {   // Name not taken
           removeFromArray(users[room], clients[socket.id].name);  // Remove old name
