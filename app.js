@@ -6,6 +6,8 @@
 var express = require('express');
 var app = express.createServer();
 var io = require('socket.io').listen(app);
+var sessionStore = new express.session.MemoryStore;// for session and cookies
+var parseCookie = require('connect').utils.parseCookie;
 var sanitize = require('validator').sanitize,
     check = require('validator').check;
 
@@ -15,6 +17,8 @@ app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
   app.use(express.bodyParser());
+  app.use(express.cookieParser());
+  app.use(express.session({ secret: "what does this do?", store: sessionStore, key: 'express.sid' }));
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
@@ -31,8 +35,16 @@ app.configure('production', function(){
 
 // Routes
 app.get('/', function(req, res){
+  if(!req.session.name){
+    req.session.name = namer.generalName();
+  }
+  if(!req.session.favRoom){
+    req.session.favRoom = 'room';
+  }
   res.render('index', {
-    title: 'sup son'
+    title: 'sup son',
+    name: req.session.name,
+    favRoom: req.session.favRoom
   });
 });
 
@@ -51,17 +63,51 @@ var curQ = {};           // current song queue per room. stores 'curIdx' and 'so
 var spotify = require('./spotApi.js');
 var votes = {};          // indexed by room then 'good', 'neutral', 'bad'
 
+var namer = require('./names.js');
 var users = {};          // keeps track of user name per room
 var clients = [];        // keeps track of info per socket
 
+// get cookies on socket.io handshake (before connect)
+var Session = require('connect').middleware.session.Session;
+io.set('authorization', function(data, accept){
+  if(data.headers.cookie){
+    data.cookie = parseCookie(data.headers.cookie);
+    data.sessionID = data.cookie['express.sid'];
+    // save the session store to the data object
+    data.sessionStore = sessionStore;
+    sessionStore.get(data.sessionID, function(err, session){
+      if(err){
+        console.log("cookie error: " + err.message);
+      }
+      else{
+        data.session = new Session(data, session);
+      }
+    });
+  }
+  accept(null, true);// we want the app to work even without cookies
+});
 
 // On connection, we have to start tracking the vote of the user and give them a random name
 // Then we tell them the name they were given
 io.sockets.on('connection', function(socket){
   console.log("new client connected");
 
-  clients[socket.id] = {vote : 'neutral', name : generateName("anon")};
-  socket.emit('name', clients[socket.id].name);
+  // cookies!
+  var chatName = '';
+  sessionStore.get(socket.handshake.sessionID, function(err, session){
+    if(!err && session && session.name){
+      chatName = session.name;
+    }
+    else{
+      chatName = namer.generalName();
+    } 
+    clients[socket.id] = {vote : 'neutral', name : chatName};
+    socket.emit('name', clients[socket.id].name);
+    if(session) {
+      session.name = chatName;
+      sessionStore.set(socket.handshake.sessionID, session);
+    }
+  });
 
   // Adds a song to the queue
   socket.on('queueUp', function(song){
@@ -127,28 +173,38 @@ io.sockets.on('connection', function(socket){
   socket.on('chat name', function(name) {
     // Sanitize name
     try{
-      check(name).regex('[-a-zA-Z0-9 _]+');
+      check(name).regex(/^[-a-z0-9 _]+$/i);
     }
     catch (e){
-      name = generateName("hax0r");
+      name = namer.hackerName();
     }
 
     socket.get('room', function(err, room) {
       if (room in users) {  // Check for repeat names
         if (users[room].indexOf(name) >= 0) {
-          socket.emit('name error', "Sorry, that name is already in use.");
+          //socket.emit('name error', "Someone else is using that name.");
+          socket.emit('chat', 'system', 'Someone else is using that name.');
+          name = namer.numberIt(name);
         }
-        else if (name.length >= 25) {
-          socket.emit('name error', "Your name must be less than 25 characters long.");
+        if (name.length >= 25) {
+          //socket.emit('name error', "Your name must be less than 25 characters long.");
+          socket.emit('chat', 'system', 'Your name must be less than 25 characters long.');
+          name = namer.generalName();
         }
-        else {   // Name not taken
-          removeFromArray(users[room], clients[socket.id].name);  // Remove old name
-          users[room].push(name);  
 
-          io.sockets.in(room).emit('chat', 'system', clients[socket.id].name+' set name to '+name);
-          clients[socket.id].name = name;
-          socket.emit('name', name);
-        }
+        removeFromArray(users[room], clients[socket.id].name);  // Remove old name
+        users[room].push(name);  
+
+        io.sockets.in(room).emit('chat', 'system', clients[socket.id].name+' is now known as '+name);
+        clients[socket.id].name = name;
+        sessionStore.get(socket.handshake.sessionID, function(err, session){
+          // save new name in cookie
+          if(!err && session){
+            session.name = name;
+            sessionStore.set(socket.handshake.sessionID, session);
+          }
+        });
+        socket.emit('name', name);
       }
     });
 
@@ -181,15 +237,24 @@ io.sockets.on('connection', function(socket){
       socket.emit('songForList', curQ[room].songs[song]);
     }
 
-  console.log('JOINED '+room+' VOTES:'+votes[room]);
+    console.log('JOINED '+room+' VOTES:'+votes[room]);
 
-  socket.set('room', room);    // set the room var so we can join in later
-  socket.join(room);           // actually join the room
+    socket.set('room', room);    // set the room var so we can join in later
+    sessionStore.get(socket.handshake.sessionID, function(err, session){
+      // save new name in cookie
+      if(!err && session){
+        // remember last visited room
+        session.favRoom = room;
+        sessionStore.set(socket.handshake.sessionID, session);
+      }
+    });
+    socket.join(room);           // actually join the room
 
-  // update votes/users info for everyone in the room
-  io.sockets.in(room).emit('votes', votes[room]);
-  io.sockets.in(room).emit('users', users[room].length);
-  io.sockets.in(room).emit('chat', 'system', clients[socket.id].name + ' connected');
+    // update votes/users info for everyone in the room
+    io.sockets.in(room).emit('votes', votes[room]);
+    io.sockets.in(room).emit('users', users[room].length);
+    socket.broadcast.to(room).emit('chat', 'system', clients[socket.id].name + ' connected');
+    socket.emit('chat', 'system', 'Now listening in: ' + room);
 
   });
 
@@ -235,16 +300,6 @@ function playNextSong(room){
       playNextSong(room);
     }, songInfo.track.length*1000);
   }
-}
-
-function generateName(base) {
-  var chars = '0123456789';
-  var name = base;
-  for(var i = 0;i<5;i++) {
-    var rnum = Math.floor(Math.random()*chars.length);
-    name += chars[rnum];
-  }
-  return name;
 }
 
 function removeFromArray(array, element) {
