@@ -49,8 +49,15 @@ app.get('/', function(req, res){
 });
 
 app.get('/:room', function(req, res){
+  var roomName = req.params.room;
+  try{
+    check(roomName).regex(/^[-a-z0-9_]+$/i);
+  }
+  catch(err){
+    roomName = "hackers";
+  }
   res.render('room', {
-    room: req.params.room,
+    room: roomName,
     actives: 0
   });
 

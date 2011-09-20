@@ -14,6 +14,9 @@ recommendations
 make things look better
   album art etc
 
+custom error pages
+  ex. /^$%$ or something like that gave a malformed uri error
+
 memcached
 redis
 couchdb
