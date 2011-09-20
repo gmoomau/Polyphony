@@ -45,7 +45,9 @@ app.get('/:room', function(req, res){
 });
 
 // Socket.io Server stuff
-var curQ = {};
+var MAX_HISTORY = 3;     // max number of previously played songs to keep
+var curQ = {};           // current song queue per room. stores 'curIdx' and 'songs'
+                         // curQ.songs[curIdx] has status = 'cur', if idx < curIdx then status = 'prev'. o/w status = 'next'
 var spotify = require('./spotApi.js');
 var votes = {};          // indexed by room then 'good', 'neutral', 'bad'
 
@@ -70,9 +72,11 @@ io.sockets.on('connection', function(socket){
           console.log(err);
         }
         else{
-          curQ[room].push(songInfo);
-          io.sockets.in(room).emit('songForList', songInfo);
-          console.log("\n******curQ is: " + curQ[room]);
+          var songObject = JSON.parse(songInfo);
+          songObject.status = 'next';
+          curQ[room].songs.push(songObject);
+          io.sockets.in(room).emit('songForList', songObject);
+          console.log("\n******curQ is: " + curQ[room].songs);
         }
       });
     });
@@ -169,12 +173,12 @@ io.sockets.on('connection', function(socket){
     else {   // otherwise we have to set the counts
       users[room] = [clients[socket.id].name];
       votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
-      curQ[room] = [];
+      curQ[room] = {curIdx:-1, songs:[]};
     }
   
     // send current song queue to user
-    for(song in curQ[room]){
-      socket.emit('songForList', curQ[room][song]);
+    for(song in curQ[room].songs){
+      socket.emit('songForList', curQ[room].songs[song]);
     }
 
   console.log('JOINED '+room+' VOTES:'+votes[room]);
@@ -194,9 +198,23 @@ io.sockets.on('connection', function(socket){
 // song starting function
 var curTimeout = null;
 function playNextSong(room){
-  if(curQ[room].length > 0){    
-    var songInfoRaw = curQ[room].shift();
-    var songInfo = JSON.parse(songInfoRaw);
+    // if curIdx = 2 then we have 3 songs in the queue already, want to make sure
+    // we have 4 songs in the queue, meaning that we have a new song to go to
+  if(curQ[room].songs.length > curQ[room].curIdx+1){    
+      if (curQ[room].curIdx >= 0) {
+        curQ[room].songs[curQ[room].curIdx].status = 'prev';
+      }
+      if (curQ[room].curIdx == MAX_HISTORY) {  
+	  // if we have the max number of songs in history already, clear a song out
+          // don't need to increment curIdx since songs get shifted
+	  curQ[room].songs.shift();
+      }
+      else {  // have to increment curIdx this time since no shift happened
+	  curQ[room].curIdx++;
+      }
+      console.log('\n******* curQ[room].curIdx:'+curQ[room].curIdx+' '+MAX_HISTORY+'******\n');
+    var songInfo = curQ[room].songs[curQ[room].curIdx];
+    songInfo.status = 'cur'
 
     io.sockets.in(room).emit('changeSong', songInfo.track.href);
 
@@ -212,7 +230,7 @@ function playNextSong(room){
     });
 
     io.sockets.in(room).emit('votes', votes[room]);
-
+    
     curTimeout = setTimeout(function(){
       playNextSong(room);
     }, songInfo.track.length*1000);

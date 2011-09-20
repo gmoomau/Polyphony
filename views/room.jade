@@ -36,9 +36,15 @@ script
       nowPlaying.addClass("currentlyPlaying");
     });
 
-    socket.on('songForList', function(songInfoRaw){
-      var songInfo = jQuery.parseJSON(songInfoRaw);
-      var trackStr = "<p class='comingUp'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name+"</p>";
+    socket.on('songForList', function(songInfo){
+      var trackStatus = 'comingUp';
+      if (songInfo.status == 'prev') {
+         trackStatus = 'alreadyPlayed';
+      }
+      else if (songInfo.status == 'cur') {
+         trackStatus = 'currentlyPlaying';
+      }
+      var trackStr = "<p class='"+trackStatus+"'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name+"</p>";
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
       // $("#queue").append(trackStr);
     });
@@ -82,7 +88,7 @@ script
 
       $("#uri").val("");
       socket.emit('queueUp', uriToAdd);
-    });
+          });
 
     $("#playItOff").click(function(e){
       e.preventDefault();
