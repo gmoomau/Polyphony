@@ -92,7 +92,6 @@ io.sockets.on('connection', function(socket){
 
   // cookies!
   var chatName = '';
-  console.log("session id is "+socket.handshake.sessionID)
   sessionStore.get(socket.handshake.sessionID, function(err, session){
     if(!err && session && session.name){
       chatName = session.name;
@@ -102,8 +101,10 @@ io.sockets.on('connection', function(socket){
     } 
     clients[socket.id] = {vote : 'neutral', name : chatName};
     socket.emit('name', clients[socket.id].name);
-    session.name = chatName;
-    sessionStore.set(socket.handshake.sessionID, session);
+    if(session){
+      session.name = chatName;
+      sessionStore.set(socket.handshake.sessionID, session);
+    }
   });
 
   // Adds a song to the queue
@@ -168,7 +169,7 @@ io.sockets.on('connection', function(socket){
   socket.on('chat name', function(name) {
     // Sanitize name
     try{
-      check(name).regex('[-a-zA-Z0-9 _]+');
+      check(name).regex(/^[-a-z0-9 _]+$/i);
     }
     catch (e){
       name = namer.hackerName();
