@@ -130,6 +130,15 @@ script
       }
     });
 
+    $("#test").mousemove(function(e) {
+         var width = $("#test").width();
+         var location = (e.pageX - this.offsetLeft) / width;
+         var red = Math.floor(255*(1-location));
+         var green = Math.floor(255*location);
+         var colorstr = 'rgb('+red+','+green+',0)';
+         $("#inner").css('background', colorstr);
+         $("#inner").width(location*width);
+    });
 
     searchForSongs = function(){
       var songName = $("#songSearch").val();
@@ -219,12 +228,14 @@ script
   };
 
 body   
+  #test 
+    #inner &nbsp;
   #container
     #chat.box     
       p Change your name:
         input#chatNameSet(type="text")
-        input#chatNameSubmit(type="button",value="Set Name")
-      #chatHistory
+        input#chatNameSubmit(type="button",value="Set Name")        
+        #chatHistory
       p
         span#chatName
         input#chatMessage(type="text")
