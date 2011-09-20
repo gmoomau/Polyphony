@@ -110,3 +110,14 @@ input {
   font-size: small;
   color: #808080;
 }
+
+#test {
+  width: 100px;
+  height: 10px;
+  border: 1px solid;
+  border-color: #808080;
+}
+
+#inner {
+  height: 10px;
+}
