@@ -101,7 +101,7 @@ io.sockets.on('connection', function(socket){
     } 
     clients[socket.id] = {vote : 'neutral', name : chatName};
     socket.emit('name', clients[socket.id].name);
-    if(session){
+    if(session) {
       session.name = chatName;
       sessionStore.set(socket.handshake.sessionID, session);
     }
