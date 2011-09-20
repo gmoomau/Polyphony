@@ -130,7 +130,8 @@ script
       }
     });
 
-    $("#songSearch").keyup(function(e){
+
+    searchForSongs = function(){
       var songName = $("#songSearch").val();
       if (songName.length > 0) {
         if (songName != prevSearch) {
@@ -146,6 +147,19 @@ script
       }  // end if songName > 0
       else {
         $("#results").text('');
+      }
+    }
+
+    var searchTimeout = null;
+    $("#songSearch").keyup(function(e){
+      if(searchTimeout != null){
+        clearTimeout(searchTimeout);
+      }
+      if(e.which == 32 || e.which == 13){
+        searchForSongs();
+      }
+      else{
+        searchTimeout = setTimeout(searchForSongs, 500);
       }
     });
 

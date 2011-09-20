@@ -1,4 +1,5 @@
 *.swp
 .screenrc
 node_modules
+public/stylesheets/weird.css
 *~
