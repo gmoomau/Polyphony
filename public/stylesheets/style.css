@@ -34,18 +34,6 @@ input {
 #queue {
 }
 
-#goodSong {
-  background: #00DD00;
-}
-
-#neutralSong {
-  background: #BBBBBB;
-}
-
-#badSong {
-  background: #DD0000;
-}
-
 #search{
   float: right;
   width: 35%;
@@ -111,13 +99,18 @@ input {
   color: #808080;
 }
 
-#test {
+#mouse {
+  width: 200px;
+  color: #808080;
+}
+
+.voteOuter {
   width: 100px;
-  height: 10px;
+  height: 12px;
   border: 1px solid;
   border-color: #808080;
 }
 
-#inner {
-  height: 10px;
+.voteInner {
+  height: 100%;
 }

@@ -127,6 +127,7 @@ io.sockets.on('connection', function(socket){
         else{
           var songObject = JSON.parse(songInfo);
           songObject.status = 'next';
+          songObject.id = 1;
           curQ[room].songs.push(songObject);
           io.sockets.in(room).emit('songForList', songObject);
           console.log("\n******curQ is: " + curQ[room].songs);
