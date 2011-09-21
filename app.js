@@ -76,6 +76,7 @@ var clients = [];        // keeps track of info per socket
 
 var songs = {};          // represents mapping from songID to songInfo.
                          // NOTE: songInfo is also in curQ[room]...
+var unusedId = 0;        // Jankity jank
 
 // get cookies on socket.io handshake (before connect)
 var Session = require('connect').middleware.session.Session;
@@ -130,7 +131,7 @@ io.sockets.on('connection', function(socket){
         else{
           var songObject = JSON.parse(songInfo);
           songObject.status = 'next';
-          songObject.id = 1;
+          songObject.id = unusedId++;
           curQ[room].songs.push(songObject);
           songs[songObject.id] = songObject;
           votes[room][songObject.id] = {};
