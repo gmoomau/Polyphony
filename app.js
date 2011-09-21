@@ -68,11 +68,14 @@ var MAX_HISTORY = 3;     // max number of previously played songs to keep
 var curQ = {};           // current song queue per room. stores 'curIdx' and 'songs'
                          // curQ.songs[curIdx] has status = 'cur', if idx < curIdx then status = 'prev'. o/w status = 'next'
 var spotify = require('./spotApi.js');
-var votes = {};          // indexed by room then 'good', 'neutral', 'bad'
+var votes = {};          // indexed by room then songId then user
 
 var namer = require('./names.js');
 var users = {};          // keeps track of user name per room
 var clients = [];        // keeps track of info per socket
+
+var songs = {};          // represents mapping from songID to songInfo.
+                         // NOTE: songInfo is also in curQ[room]...
 
 // get cookies on socket.io handshake (before connect)
 var Session = require('connect').middleware.session.Session;
@@ -94,7 +97,7 @@ io.set('authorization', function(data, accept){
   accept(null, true);// we want the app to work even without cookies
 });
 
-// On connection, we have to start tracking the vote of the user and give them a random name
+// On connection, we have to give them a random name
 // Then we tell them the name they were given
 io.sockets.on('connection', function(socket){
   console.log("new client connected");
@@ -108,7 +111,7 @@ io.sockets.on('connection', function(socket){
     else{
       chatName = namer.generalName();
     } 
-    clients[socket.id] = {vote : 'neutral', name : chatName};
+    clients[socket.id] = {name : chatName};
     socket.emit('name', clients[socket.id].name);
     if(session) {
       session.name = chatName;
@@ -129,6 +132,8 @@ io.sockets.on('connection', function(socket){
           songObject.status = 'next';
           songObject.id = 1;
           curQ[room].songs.push(songObject);
+          songs[songObject.id] = songObject;
+          votes[room][songObject.id] = {};
           io.sockets.in(room).emit('songForList', songObject);
           console.log("\n******curQ is: " + curQ[room].songs);
         }
@@ -147,32 +152,28 @@ io.sockets.on('connection', function(socket){
   });
 
   // User changed vote
-  socket.on('vote', function(vote) {
-    var prev = clients[socket.id].vote;
-
-    if (prev != vote) {  // ignore if they vote for the same thing
+  socket.on('vote', function(songId, vote) {
       socket.get('room', function(err,room) { // get room from socket
-        console.log(votes[room][prev]);
-        votes[room][prev] -= 1;
-        votes[room][vote] += 1;
-        clients[socket.id].vote = vote;
-        io.sockets.in(room).emit('votes', votes[room]);
+              votes[room][songId][socket.id] = vote;
+              setSongAvg(songId,room);
       });
-    }
   });
 
-  // when user disconnects, we have to decrement votes and remove username
+  // when user disconnects, we have to remove username
   socket.on('disconnect', function() {
-    votes[clients[socket.id].vote] -= 1;
     socket.get('room', function(err,room) {
       if(room != null && room in users) { 
         var name = clients[socket.id].name;
         removeFromArray(users[room], name);
-        votes[room][clients[socket.id].vote]--;
-        io.sockets.in(room).emit('votes', votes[room]);
         io.sockets.in(room).emit('users', users[room].length);
         io.sockets.in(room).emit('chat', 'system', name+' left');
-        // maybe get rid of room from the users/votes hashes if no one's in them?
+        for(var song in curQ[room].songs){
+          var songId = curQ[room].songs[song].id; 
+          console.log('\n********songid:'+songId +'********');
+          votes[room][songId][socket.id] = 0;
+          setSongAvg(songId,room);
+        }
+        // maybe get rid of room from the users hashes if no one's in them?
       }
     });
   });
@@ -232,20 +233,18 @@ io.sockets.on('connection', function(socket){
   socket.on('join room', function(room) {
     if (room in users){  // if the room already exists, increment counts
       users[room].push(clients[socket.id].name);
-      votes[room]['neutral']++;
     }
     else {   // otherwise we have to set the counts
       users[room] = [clients[socket.id].name];
-      votes[room] = {'good' : 0, 'neutral' : 1, 'bad' : 0};
       curQ[room] = {curIdx:-1, songs:[]};
+      votes[room] = {}
     }
   
     // send current song queue to user
     for(song in curQ[room].songs){
       socket.emit('songForList', curQ[room].songs[song]);
     }
-
-    console.log('JOINED '+room+' VOTES:'+votes[room]);
+    console.log('JOINED '+room);
 
     socket.set('room', room);    // set the room var so we can join in later
     sessionStore.get(socket.handshake.sessionID, function(err, session){
@@ -258,8 +257,7 @@ io.sockets.on('connection', function(socket){
     });
     socket.join(room);           // actually join the room
 
-    // update votes/users info for everyone in the room
-    io.sockets.in(room).emit('votes', votes[room]);
+    // update users info for everyone in the room
     io.sockets.in(room).emit('users', users[room].length);
     socket.broadcast.to(room).emit('chat', 'system', clients[socket.id].name + ' connected');
     socket.emit('chat', 'system', 'Now listening in: ' + room);
@@ -267,6 +265,18 @@ io.sockets.on('connection', function(socket){
   });
 
 });
+
+function setSongAvg(songId, room) {
+  var avg = 0;
+  for(var key in votes[room][songId]) {
+        avg += votes[room][songId][key];
+  }
+
+  songs[songId].avg = avg / users[room].length;
+  console.log('****songid:'+songId+' avg: '+songs[songId].avg+'****');
+  io.sockets.in(room).emit('vote update', songId, songs[songId].avg);
+
+}
 
 // song starting function
 var curTimeout = null;
@@ -290,19 +300,6 @@ function playNextSong(room){
     songInfo.status = 'cur'
 
     io.sockets.in(room).emit('changeSong', songInfo.track.href);
-
-    // Set votes in the room to be all neutral
-    votes[room]['good'] = 0;
-    votes[room]['neutral'] = users[room].length;
-    votes[room]['bad'] = 0;
-
-    // Reset client votes from room to be neutral
-    var room_clients = io.sockets.clients(room);
-    room_clients.forEach(function(room_client) {
-      clients[room_client.id].vote = 'neutral';           
-    });
-
-    io.sockets.in(room).emit('votes', votes[room]);
     
     curTimeout = setTimeout(function(){
       playNextSong(room);

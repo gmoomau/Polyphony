@@ -44,14 +44,18 @@ script
       }
       var trackStr = "<div class='"+trackStatus+"'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name;
       trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
-      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>";
-      trackStr += "<span id='"+songInfo.id+"_voteSet'>Set!</span>";
+      trackStr += "<input id='"+songInfo.id+"_voteValue' type='hidden' value='50' />";
+      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>"; // also closes the voteOuter
+      trackStr += "<span id='"+songInfo.id+"_voteSet'>Set!</span> </div>"; 
+      trackStr += "<div class='voteOuter'>"; // doesn't need an id
+      trackStr += "<div class='voteAvg' id='"+songInfo.id+"_voteAvg'>&nbsp;<div> </div>";
       trackStr += "</div><p />";
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
       $("#"+songInfo.id+"_voteSet").hide();
       $("#"+songInfo.id+"_voteOuter").mousemove(slideVote);
+      $("#"+songInfo.id+"_voteOuter").mouseleave(setVoteWidth);
       $("#"+songInfo.id+"_voteOuter").click(setVote);
-      // $("#queue").append(trackStr);
+      $("#"+songInfo.id+"_voteOuter").click();
     });
 
     socket.on('users', function(userCount){
@@ -78,6 +82,10 @@ script
           $("#chatHistory").append("<p><strong>"+name+"</strong>: "+msg+"</p>");
        }
        $("#chatHistory").prop("scrollTop",$("#chatHistory").prop("scrollHeight"));
+    });
+
+    socket.on('vote update', function(songId, avg) {
+       setColorAndWidth(songId, avg, true);
     });
 
     // add song to server queue
@@ -118,18 +126,35 @@ script
          var songId = parseInt(this.id);
          var width = $(this).width();
          var location = (e.pageX - $("#"+songId+"_voteInner").offset().left) / width;
-         location = location < 1 ? location : 1;
-         var red = Math.floor(255*(1-location));
-         var green = Math.floor(255*location);
-         var colorstr = 'rgb('+red+','+green+',0)';
-         $("#"+songId+"_voteInner").css('background', colorstr);
-         $("#"+songId+"_voteInner").width(location*width);
+         location = location < 1 ? location : 1;  // make sure it's less than 1
+         setColorAndWidth (songId, location*100, false);
     }
 
-    function setVote (e) {
+    // width should be in 0-100
+    // if avg is true then we're setting the song's avg not the local one
+    function setColorAndWidth (songId, width, avg) {
+         var red = Math.floor(2.55*(100-width));
+         var green = Math.floor(2.55*width);
+         var colorstr = 'rgb('+red+','+green+',0)';
+         var avgStr = 'Inner';
+         if (avg) { avgStr = 'Avg';}
+         $("#"+songId+"_vote"+avgStr).css('background', colorstr);
+         $("#"+songId+"_vote"+avgStr).width(width+'%');
+    }
+
+    function setVote () {
          var songId = parseInt(this.id);
+         var voteValue = $("#"+songId+"_voteInner").width();
+         $("#"+songId+"_voteValue").val(voteValue);
          $("#"+songId+"_voteSet").show();
          setTimeout(function() { $("#"+songId+"_voteSet").hide();}, 1500);
+         socket.emit('vote', songId, voteValue);
+    }
+
+    function setVoteWidth() {
+         var songId = parseInt(this.id);
+         var width = $("#"+songId+"_voteValue").val();
+         setColorAndWidth(songId, width, false); 
     }
 
     searchForSongs = function(){
