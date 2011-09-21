@@ -5,7 +5,6 @@ title sup #{room}
 script(src="socket.io/socket.io.js");
 script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js");
 script
-  var prevVote = 'neutral';
   var room = '#{room}';
   var results;
   var prevSearch;
@@ -22,7 +21,6 @@ script
     });
 
     socket.on('changeSong', function(songURI){
-      setVoteColor('neutral');      
       $("#loadSong").attr('src', songURI);
 
       // bump previously played song up
@@ -44,15 +42,13 @@ script
       else if (songInfo.status == 'cur') {
          trackStatus = 'currentlyPlaying';
       }
-      var trackStr = "<p class='"+trackStatus+"'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name+"</p>";
+      var trackStr = "<div class='"+trackStatus+"'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name;
+      trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
+      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>";
+      trackStr += "</div><p />";
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
+      $("#"+songInfo.id+"_voteOuter").mousemove(slideVote);
       // $("#queue").append(trackStr);
-    });
-
-    socket.on('votes', function(voteRecords){
-      $("#goodSong").val(voteRecords.good);
-      $("#neutralSong").val(voteRecords.neutral);
-      $("#badSong").val(voteRecords.bad);
     });
 
     socket.on('users', function(userCount){
@@ -95,21 +91,6 @@ script
       socket.emit('startPlayback');
     });
 
-    $("#goodSong").click(function(e){
-      socket.emit('vote', 'good');
-      setVoteColor('good');
-    });
-
-    $("#neutralSong").click(function(e){
-      socket.emit('vote','neutral');
-      setVoteColor('neutral');
-    });
-
-    $("#badSong").click(function(e){
-      socket.emit('vote','bad');
-      setVoteColor('bad');
-    });		
-
     $("#songSearch").click(function(e) {
       $("#songSearch").val('');
     });
@@ -130,15 +111,17 @@ script
       }
     });
 
-    $("#test").mousemove(function(e) {
-         var width = $("#test").width();
-         var location = (e.pageX - this.offsetLeft) / width;
+    function slideVote (e) {
+         var songId = parseInt(this.id);
+         var width = $(this).width();
+         var location = (e.pageX - $("#"+songId+"_voteInner").offset().left) / width;
+         location = location < 1 ? location : 1;
          var red = Math.floor(255*(1-location));
          var green = Math.floor(255*location);
          var colorstr = 'rgb('+red+','+green+',0)';
-         $("#inner").css('background', colorstr);
-         $("#inner").width(location*width);
-    });
+         $("#"+songId+"_voteInner").css('background', colorstr);
+         $("#"+songId+"_voteInner").width(location*width);
+    }
 
     searchForSongs = function(){
       var songName = $("#songSearch").val();
@@ -219,17 +202,7 @@ script
     $("#uri").val(text);
   }
 
-  function setVoteColor(selected) {
-    if (prevVote != '') {
-      $("#"+prevVote+"Song").removeClass('selectedVote').addClass('nonselectedVote');
-    }
-    $("#"+selected+"Song").attr('class', 'selectedVote');	
-    prevVote = selected;
-  };
-
 body   
-  #test 
-    #inner &nbsp;
   #container
     #chat.box     
       p Change your name:
@@ -240,14 +213,6 @@ body
         span#chatName
         input#chatMessage(type="text")
     #songStuff.box
-      table#voteSongs(width="60%",)
-        tr
-          td Like: 
-            input#goodSong.nonselectedVote(type="button", value="0")
-          td Neutral: 
-            input#neutralSong.selectedVote(type="button", value="0")
-          td Skip: 
-            input#badSong.nonselectedVote(type="button", value="0")
       #inputSongs
         form#uriForm
           input#uri(type="text", size ="20" )
