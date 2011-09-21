@@ -45,9 +45,12 @@ script
       var trackStr = "<div class='"+trackStatus+"'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name;
       trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
       trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>";
+      trackStr += "<span id='"+songInfo.id+"_voteSet'>Set!</span>";
       trackStr += "</div><p />";
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
+      $("#"+songInfo.id+"_voteSet").hide();
       $("#"+songInfo.id+"_voteOuter").mousemove(slideVote);
+      $("#"+songInfo.id+"_voteOuter").click(setVote);
       // $("#queue").append(trackStr);
     });
 
@@ -121,6 +124,12 @@ script
          var colorstr = 'rgb('+red+','+green+',0)';
          $("#"+songId+"_voteInner").css('background', colorstr);
          $("#"+songId+"_voteInner").width(location*width);
+    }
+
+    function setVote (e) {
+         var songId = parseInt(this.id);
+         $("#"+songId+"_voteSet").show();
+         setTimeout(function() { $("#"+songId+"_voteSet").hide();}, 1500);
     }
 
     searchForSongs = function(){

@@ -86,9 +86,11 @@ input {
 .comingUp {
   color: #C0C0C0;
 }
+
 .alreadyPlayed {
   color: #808080;
 }
+
 .currentlyPlaying {
   color: #FFFFFF;
 }
@@ -96,11 +98,6 @@ input {
 #spotifyBranding {
   clear: both;
   font-size: small;
-  color: #808080;
-}
-
-#mouse {
-  width: 200px;
   color: #808080;
 }
 
@@ -112,5 +109,6 @@ input {
 }
 
 .voteInner {
+  width: 50%;
   height: 100%;
 }
