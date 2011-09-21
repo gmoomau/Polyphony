@@ -1,5 +1,5 @@
-playlist history
-voting
+playlist history - 3 song history displayed/stored.  easier to store more w/ db
+voting - set current top 3 songs, and use them
 song selection modes (queue, cycle through djs, ...)
 
 album support
@@ -11,11 +11,17 @@ refactor code
 playlist support?
 recommendations
 
-make things look better
-  album art etc
-
 custom error pages
   ex. /^$%$ or something like that gave a malformed uri error
+
+Layout changes:
+  - album art etc
+  - top 3 songs listed
+  - label your name in chat as diff color
+  - timestamp for messages? (HH:MM)
+  - location of voting bars
+  - song queue will continually grow even if there are 1000s of songs in it
+  - colorscheme?
 
 memcached
 redis
