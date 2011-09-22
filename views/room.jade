@@ -89,13 +89,11 @@ script
     });
 
     // add song to server queue
-    $("#sub").click(function(e){
+    $("#uri").click(function(e){
       e.preventDefault();
       var uriToAdd = $("#uri").val()
-
-      $("#uri").val("");
-      socket.emit('queueUp', uriToAdd);
-          });
+      socket.emit('queueUp',uriToAdd);
+    });
 
     $("#playItOff").click(function(e){
       e.preventDefault();
@@ -200,15 +198,17 @@ script
     for(var i=startAt;count < 5 && i<results.tracks.length; i++) {
       var track = results.tracks[i];
       var availability = track.album.availability.territories;
-      var regionClass = '';
+
+      var regionClass = 'available';
       if (availability.indexOf('US') < 0) { // only show things available in US
         regionClass = 'unavailable';
       }
+  
       var artist = track.artists[0].name;
       var song = track.name;
       if (!found[artist+song]) {
         var toAdd = artist + ' - '+song;
-        addHtml += '<p class="'+regionClass+'" onClick="setAddText('+"'"+track.href+"'"+')">'+toAdd+'</p>';
+        addHtml += '<p class="'+regionClass+'" onClick="queueSong('+"'"+track.href+"'"+')">'+toAdd+'</p>';
         count++;
         found[artist+song] = true;
       }
@@ -230,10 +230,12 @@ script
     else{
       $("#results").html(addHtml);
     }
+
   }
 
-  function setAddText(text) {
+  function queueSong(text) {
     $("#uri").val(text);
+    $("#uri").click();
   }
 
 body   
@@ -249,8 +251,7 @@ body
     #songStuff.box
       #inputSongs
         form#uriForm
-          input#uri(type="text", size ="20" )
-          input#sub(type="submit", value="add")
+          input#uri(type="hidden", size ="20" )
           form#next
             input#playItOff(type="submit", value="next song")
       h5 Songs

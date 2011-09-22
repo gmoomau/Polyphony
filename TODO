@@ -15,6 +15,7 @@ custom error pages
   ex. /^$%$ or something like that gave a malformed uri error
 
 Layout changes:
+  - auto-vote to 100% if you added a song
   - album art etc
   - top 3 songs listed
   - label your name in chat as diff color
