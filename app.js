@@ -226,7 +226,8 @@ io.sockets.on('connection', function(socket){
 
     socket.get('room', function(err,room) {
       var cleaned = sanitize(msg).xss();  // Sanitize name
-      io.sockets.in(room).emit('chat', name, cleaned);
+      socket.broadcast.to(room).emit('chat', name, cleaned, false);  // doesn't get sent back to the originating socket
+      socket.emit('chat', name, cleaned, true);   // send user cleaned version of their message
     });
   });
 

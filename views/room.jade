@@ -74,12 +74,17 @@ script
        alert(msg);
     });
 
-    socket.on('chat', function(name,msg) {
+    // if mine == true then display name as chatNameMine
+    socket.on('chat', function(name,msg, mine) {
+       var curTime = new Date();
+       var timeStr = convertTimeToString(curTime);
+
        if (name == 'system') {
-          $("#chatHistory").append("<p><em> "+msg+"</em></p>");
+          $("#chatHistory").append("<p> <span class='chatTime'>"+timeStr+" &nbsp;</span> <em> "+msg+"</em></p>");
        } 
        else {
-          $("#chatHistory").append("<p><strong>"+name+"</strong>: "+msg+"</p>");
+          var nameClass = mine ? 'chatNameMine' : 'chatNameOther';
+          $("#chatHistory").append("<p><span class='chatTime'>"+timeStr+" &nbsp;</span> <strong class='"+nameClass+"'>"+name+"</strong>: "+msg+"</p>");
        }
        $("#chatHistory").prop("scrollTop",$("#chatHistory").prop("scrollHeight"));
     });
@@ -126,6 +131,17 @@ script
          var location = (e.pageX - $("#"+songId+"_voteInner").offset().left) / width;
          location = location < 1 ? location : 1;  // make sure it's less than 1
          setColorAndWidth (songId, location*100, false);
+    }
+
+    // Returns a string like 'HH:MM'
+    function convertTimeToString(time) {
+      var result = '';
+      var hours = time.getHours();
+      var mins  = time.getMinutes();
+      result += hours < 10 ? '0'+hours : hours;
+      result += ':';
+      result += mins < 10 ? '0'+mins : mins;
+      return result;
     }
 
     // width should be in 0-100

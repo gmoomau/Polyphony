@@ -121,3 +121,15 @@ input {
   height: 100%;
   background: rgb(127,128,0);
 }
+
+.chatNameMine {
+  color: #000080;
+}
+
+.chatNameOther {
+  color: #800000;
+}
+
+.chatTime {
+  color: #808080;
+}
