@@ -20,7 +20,14 @@ script
       console.log(data);
     });
 
-    socket.on('changeSong', function(songURI){
+    // songStart is either 0, or the time when the song started playing in the room in millis
+    socket.on('changeSong', function(songURI, songStart){
+
+      if (songStart != 0) {
+         var curDate = new Date();
+         var diff = curDate.getTime() - songStart;
+         songURI += '#' + Math.floor(diff/(1000*60))+':'+Math.floor((diff/1000)%60);
+      }
       $("#loadSong").attr('src', songURI);
 
       // bump previously played song up

@@ -235,6 +235,15 @@ io.sockets.on('connection', function(socket){
   socket.on('join room', function(room) {
     if (room in users){  // if the room already exists, increment counts
       users[room].push(clients[socket.id].name);
+      // start song playback
+      if (curQ[room].curIdx >= 0) {
+        var curSong = curQ[room].songs[curQ[room].curIdx];
+        if (curSong.status == 'cur') {   // current song might be over
+            socket.emit('changeSong', curSong.track.href, curSong.startTime);  // start playback
+            console.log('*******'+curSong.startTime+'*********');
+        }
+      }
+
     }
     else {   // otherwise we have to set the counts
       users[room] = [clients[socket.id].name];
@@ -258,7 +267,7 @@ io.sockets.on('connection', function(socket){
       }
     });
     socket.join(room);           // actually join the room
-
+  
     // update users info for everyone in the room
     io.sockets.in(room).emit('users', users[room].length);
     socket.broadcast.to(room).emit('chat', 'system', clients[socket.id].name + ' connected');
@@ -299,9 +308,9 @@ function playNextSong(room){
       }
       console.log('\n******* curQ[room].curIdx:'+curQ[room].curIdx+' '+MAX_HISTORY+'******\n');
     var songInfo = curQ[room].songs[curQ[room].curIdx];
-    songInfo.status = 'cur'
-
-    io.sockets.in(room).emit('changeSong', songInfo.track.href);
+    songInfo.status = 'cur';
+    songInfo.startTime = (new Date()).getTime();
+    io.sockets.in(room).emit('changeSong', songInfo.track.href, 0);
     
     curTimeout = setTimeout(function(){
       playNextSong(room);
