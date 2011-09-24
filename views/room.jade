@@ -46,16 +46,18 @@ script
       trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
       trackStr += "<input id='"+songInfo.id+"_voteValue' type='hidden' value='50' />";
       trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>"; // also closes the voteOuter
-      trackStr += "<span id='"+songInfo.id+"_voteSet'>Set!</span> </div>"; 
+      trackStr += "<span id='"+songInfo.id+"_voteSet'>Set!</span>"; 
       trackStr += "<div class='voteOuter'>"; // doesn't need an id
-      trackStr += "<div class='voteAvg' id='"+songInfo.id+"_voteAvg'>&nbsp;<div> </div>";
-      trackStr += "</div><p />";
+      trackStr += "<div class='voteAvg' id='"+songInfo.id+"_voteAvg'>&nbsp;<div> </div></div>";  // also closes the voteOuter
+      trackStr += "</div></div><p />";  // also closes the track div and voteOuter
+
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
       $("#"+songInfo.id+"_voteSet").hide();
       $("#"+songInfo.id+"_voteOuter").mousemove(slideVote);
       $("#"+songInfo.id+"_voteOuter").mouseleave(setVoteWidth);
       $("#"+songInfo.id+"_voteOuter").click(setVote);
       $("#"+songInfo.id+"_voteOuter").click();
+      setColorAndWidth(songInfo.id, 50, false);
     });
 
     socket.on('users', function(userCount){
@@ -147,8 +149,11 @@ script
     // width should be in 0-100
     // if avg is true then we're setting the song's avg not the local one
     function setColorAndWidth (songId, width, avg) {
-         var red = Math.floor(2.55*(100-width));
-         var green = Math.floor(2.55*width);
+         // Color map:  0 -> fa0000; 
+         //            50 -> ffff00; 
+         //           100 -> 00fa00;
+         var red = width < 50 ? 255 : Math.floor(5*(100-width));
+         var green = width < 50 ? Math.floor(5*width) : 255;
          var colorstr = 'rgb('+red+','+green+',0)';
          var avgStr = 'Inner';
          if (avg) { avgStr = 'Avg';}
