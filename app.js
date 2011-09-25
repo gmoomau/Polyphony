@@ -239,8 +239,10 @@ io.sockets.on('connection', function(socket){
       if (curQ[room].curIdx >= 0) {
         var curSong = curQ[room].songs[curQ[room].curIdx];
         if (curSong.status == 'cur') {   // current song might be over
-            socket.emit('changeSong', curSong.track.href, curSong.startTime);  // start playback
-            console.log('*******'+curSong.startTime+'*********');
+         var diff = (new Date()).getTime() - curSong.startTime;
+
+	 socket.emit('changeSong', curSong.track.href, Math.floor(diff / (1000*60)), Math.floor((diff/1000)%60));  // start playback
+
         }
       }
 
@@ -310,7 +312,7 @@ function playNextSong(room){
     var songInfo = curQ[room].songs[curQ[room].curIdx];
     songInfo.status = 'cur';
     songInfo.startTime = (new Date()).getTime();
-    io.sockets.in(room).emit('changeSong', songInfo.track.href, 0);
+    io.sockets.in(room).emit('changeSong', songInfo.track.href, 0,0);
     
     curTimeout = setTimeout(function(){
       playNextSong(room);
