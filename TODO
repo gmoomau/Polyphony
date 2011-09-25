@@ -2,7 +2,7 @@ playlist history - 3 song history displayed/stored.  easier to store more w/ db
 voting - set current top 3 songs, and use them
 song selection modes (queue, cycle through djs, ...)
 
-album support
+album support // may not be necessary since search can handle that basically
 useful error messages
 
 refactor code
@@ -24,6 +24,4 @@ Layout changes:
   - textbox (on / too) where you type in a room name and click enter and you go
   - button you click to jump to current playtime? (eg for if you got hit by a commercial and want to get back to the same play spot as the group)
 
-memcached
 redis
-couchdb

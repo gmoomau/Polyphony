@@ -1,3 +1,11 @@
+pre::-webkit-scrollbar {  
+  width: 1ex;  
+}  
+
+pre::-webkit-scrollbar-thumb:horizontal { 
+  background: rgba(0, 0, 0, .2);  
+}  
+
 body {
   padding: 25px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
@@ -54,6 +62,17 @@ input {
   padding-top: 10px;
   background: #FFFFFF;
   color: #000000;
+
+}
+.scrolling::-webkit-scrollbar {
+  width: 1.5ex;
+  -webkit-border-radius: 1ex;
+}
+.scrolling::-webkit-scrollbar-thumb:vertical {
+  border-right: 1px solid #fff;
+  background: rgba(0, 0, 0, .2);
+  -webkit-border-radius: 1ex;  
+  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .4);  
 }
 
 #chat{
