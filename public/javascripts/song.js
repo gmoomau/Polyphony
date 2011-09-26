@@ -78,6 +78,11 @@ socket.on('song change', function(songURI, mins, secs){
       var prevSong = $(".currentlyPlaying");
       prevSong.removeClass("currentlyPlaying");
       prevSong.addClass("alreadyPlayed");
+     
+      // check to see if we have > 3 alreadyPlayed songs, if so get rid of one
+      if($(".alreadyPlayed").size() > 3) {
+	  $(".alreadyPlayed:first").remove();
+      }
 
       // mark current song as playing
       var nowPlaying = $(".comingUp").filter(":first");

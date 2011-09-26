@@ -19,5 +19,6 @@ function getSongLink(song) {
 // based on if it's available
 function isSongAvailable(song,region) {
   var availability = song.album.availability.territories;
+  //  alert(getSongName(song) + ' ' + availability);
   return (availability.indexOf(region) > -1) ? true : false;
 }
