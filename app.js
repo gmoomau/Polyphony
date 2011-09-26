@@ -129,7 +129,7 @@ io.sockets.on('connection', function(socket){
           console.log(err);
         }
         else{
-          var songObject = JSON.parse(songInfo);
+          var songObject = JSON.parse(songInfo).track;
           songObject.status = 'next';
           songObject.id = unusedId++;
           curQ[room].songs.push(songObject);
@@ -241,7 +241,7 @@ io.sockets.on('connection', function(socket){
         if (curSong.status == 'cur') {   // current song might be over
          var diff = (new Date()).getTime() - curSong.startTime;
 
-	 socket.emit('song change', curSong.track.href, Math.floor(diff / (1000*60)), Math.floor((diff/1000)%60));  // start playback
+	 socket.emit('song change', curSong.href, Math.floor(diff / (1000*60)), Math.floor((diff/1000)%60));  // start playback
 
         }
       }
@@ -312,11 +312,11 @@ function playNextSong(room){
     var songInfo = curQ[room].songs[curQ[room].curIdx];
     songInfo.status = 'cur';
     songInfo.startTime = (new Date()).getTime();
-    io.sockets.in(room).emit('song change', songInfo.track.href, 0,0);
+    io.sockets.in(room).emit('song change', songInfo.href, 0,0);
     
     curTimeout = setTimeout(function(){
       playNextSong(room);
-    }, songInfo.track.length*1000);
+    }, songInfo.length*1000);
   }
 }
 

@@ -33,18 +33,17 @@ function searchForSongs(){
     var addHtml = '';
     for(var i=startAt;count < 5 && i<results.tracks.length; i++) {
       var track = results.tracks[i];
-      var availability = track.album.availability.territories;
-
       var regionClass = 'available';
-      if (availability.indexOf('US') < 0) { // only show things available in US
+
+      if (!isSongAvailable(track, 'US')){
         regionClass = 'unavailable';
       }
-  
-      var artist = track.artists[0].name;
-      var song = track.name;
+
+      var artist = getSongArtist(track);
+      var song = getSongName(track);
       if (!found[artist+song]) {
         var toAdd = artist + ' - '+song;
-        addHtml += '<p class="'+regionClass+'" onClick="queueSong('+"'"+track.href+"'"+')">'+toAdd+'</p>';
+        addHtml += '<p class="'+regionClass+'" onClick="queueSong('+"'"+getSongLink(track)+"'"+')">'+toAdd+'</p>';
         count++;
         found[artist+song] = true;
       }
@@ -79,6 +78,11 @@ socket.on('song change', function(songURI, mins, secs){
       var prevSong = $(".currentlyPlaying");
       prevSong.removeClass("currentlyPlaying");
       prevSong.addClass("alreadyPlayed");
+     
+      // check to see if we have > 3 alreadyPlayed songs, if so get rid of one
+      if($(".alreadyPlayed").size() > 3) {
+	  $(".alreadyPlayed:first").remove();
+      }
 
       // mark current song as playing
       var nowPlaying = $(".comingUp").filter(":first");
@@ -94,7 +98,10 @@ socket.on('song add', function(songInfo){
       else if (songInfo.status == 'cur') {
          trackStatus = 'currentlyPlaying';
       }
-      var trackStr = "<div class='"+trackStatus+"'>"+songInfo.track.artists[0].name +" - "+ songInfo.track.name;
+      var songArtist = getSongArtist(songInfo);
+      var songName = getSongName(songInfo);
+
+      var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName;
       trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
       trackStr += "<input id='"+songInfo.id+"_voteValue' type='hidden' value='50' />";
       trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>"; // also closes the voteOuter
@@ -134,6 +141,10 @@ socket.on('song add', function(songInfo){
       e.preventDefault();
       var uriToAdd = $("#uri").val()
       socket.emit('song add',uriToAdd);
+    });
+
+    $("#songSearch").click(function(e) {
+       $("#songSearch").val('');
     });
 
 }
