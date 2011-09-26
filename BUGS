@@ -1,4 +1,5 @@
-unavaialable songs in queue don't show up as red
-
-some songs (eg 'No One Knows - QOTSA') have multiple track responses from the spotify query and while one may be unavailable in the US another isn't.  the unavailable one shows up first, so the name is red, but you *can* play the song.  
+-some songs (eg 'No One Knows - QOTSA') have multiple track responses from the spotify query and while one may be unavailable in the US another isn't.  the unavailable one shows up first, so the name is red, but you *can* play the song.  
   - possible fix: keep track of availability in the foudn hash.  if song is found, see if we can update availability from false to true
+
+- unavaialable songs in queue don't show up as red
+- no previous button in the search
