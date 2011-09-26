@@ -41,4 +41,13 @@ function initVotes(socket) {
     socket.on('vote update', function(songId, avg) {
        setColorAndWidth(songId, avg, true);
     });
+
+    socket.on('vote topsongs', function(songs) {
+      $("#topSongList").text('');
+      var newSongList = '<ol>';
+      for(var i=0; i<songs.length; i++){
+          newSongList += '<li class="topSong">'+getSongName(songs[i])+'</li>';
+      }
+      $("#topSongList").html(newSongList);
+    });
 }

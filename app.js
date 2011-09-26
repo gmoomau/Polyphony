@@ -65,6 +65,7 @@ app.get('/:room', function(req, res){
 
 // Socket.io Server stuff
 var MAX_HISTORY = 3;     // max number of previously played songs to keep
+var NUM_TOP_SONGS = 3;   // number of songs displayed in the top songs list
 var curQ = {};           // current song queue per room. stores 'curIdx' and 'songs'
                          // curQ.songs[curIdx] has status = 'cur', if idx < curIdx then status = 'prev'. o/w status = 'next'
 var spotify = require('./spotApi.js');
@@ -157,7 +158,9 @@ io.sockets.on('connection', function(socket){
       socket.get('room', function(err,room) { // get room from socket
               votes[room][songId][socket.id] = vote;
               setSongAvg(songId,room);
-      });
+              io.sockets.in(room).emit('vote topsongs', getTopSongs(room));
+      }); 
+   
   });
 
   // when user disconnects, we have to remove username
@@ -323,6 +326,23 @@ function playNextSong(room){
 function removeFromArray(array, element) {
   var idx = array.indexOf(element);
   array.splice(idx, 1);
+}
+
+// function used to sort the song queue based on song avg votes
+// songs come from curQ[room].songs
+function sortSongsByAvg(song1, song2) {
+    return songs[song2.id].avg - songs[song1.id].avg;
+}
+
+// returns a list containing the top 3 songs in the queue right now
+function getTopSongs(room) {
+  var topSongs = [];
+  var queue = curQ[room].songs;
+  queue.sort(sortSongsByAvg);
+  for(var i=0; i<NUM_TOP_SONGS && i<queue.length; i++) {
+      topSongs[i] = queue[i];
+  }
+  return topSongs;
 }
 
 var port = process.env.PORT || 3000;

@@ -32,6 +32,15 @@ input {
 #inputSongs {
 }
 
+#topSongContainer {
+  float: right;
+  width: 35%;
+}
+
+#topSongList {
+  font-size: 12px;  
+}
+
 #queue {
 }
 

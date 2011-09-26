@@ -107,7 +107,7 @@ socket.on('song add', function(songInfo){
       trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>"; // also closes the voteOuter
       trackStr += "<span id='"+songInfo.id+"_voteSet'>Set!</span>"; 
       trackStr += "<div class='voteOuter'>"; // doesn't need an id
-      trackStr += "<div class='voteAvg' id='"+songInfo.id+"_voteAvg'>&nbsp;<div> </div></div>";  // also closes the voteOuter
+      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteAvg'>&nbsp;<div> </div></div>";  // also closes the voteOuter
       trackStr += "</div></div><p />";  // also closes the track div and voteOuter
 
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
