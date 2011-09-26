@@ -71,7 +71,7 @@ function searchForSongs(){
 
 function initSongs(socket) {
 // songStart is either 0, or the time when the song started playing in the room in millis
-socket.on('changeSong', function(songURI, mins, secs){
+socket.on('song change', function(songURI, mins, secs){
 
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
 
@@ -86,7 +86,7 @@ socket.on('changeSong', function(songURI, mins, secs){
       nowPlaying.addClass("currentlyPlaying");
 });
 
-socket.on('songForList', function(songInfo){
+socket.on('song add', function(songInfo){
       var trackStatus = 'comingUp';
       if (songInfo.status == 'prev') {
          trackStatus = 'alreadyPlayed';
@@ -114,7 +114,7 @@ socket.on('songForList', function(songInfo){
 
    $("#playItOff").click(function(e){
         e.preventDefault();
-        socket.emit('startPlayback');
+        socket.emit('song start');
    });
 
     var searchTimeout = null;
@@ -133,7 +133,7 @@ socket.on('songForList', function(songInfo){
     $("#uri").click(function(e){
       e.preventDefault();
       var uriToAdd = $("#uri").val()
-      socket.emit('queueUp',uriToAdd);
+      socket.emit('song add',uriToAdd);
     });
 
 }

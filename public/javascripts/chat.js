@@ -1,9 +1,5 @@
 function initChat(socket) {
-    socket.on('msg', function(data){
-      console.log(data);
-    });
-
-    socket.on('users', function(userCount){
+    socket.on('chat users', function(userCount){
       $("#users").text(userCount + " people currently connected");
     });
 
@@ -11,16 +7,16 @@ function initChat(socket) {
        socket.emit('disconnect');
     });      
 
-    socket.on('name', function(name) {
+    socket.on('chat name', function(name) {
        $("#chatName").text(name+":");
     });
 
-    socket.on('name error', function(msg) {
+    socket.on('chat name error', function(msg) {
        alert(msg);
     });
 
     // if mine == true then display name as chatNameMine
-    socket.on('chat', function(name,msg, mine) {
+    socket.on('chat message', function(name,msg, mine) {
        var curTime = new Date();
        var timeStr = convertTimeToString(curTime);
 

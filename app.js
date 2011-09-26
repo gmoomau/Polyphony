@@ -113,7 +113,7 @@ io.sockets.on('connection', function(socket){
       chatName = namer.generalName();
     } 
     clients[socket.id] = {name : chatName};
-    socket.emit('name', clients[socket.id].name);
+    socket.emit('chat name', clients[socket.id].name);
     if(session) {
       session.name = chatName;
       sessionStore.set(socket.handshake.sessionID, session);
@@ -121,7 +121,7 @@ io.sockets.on('connection', function(socket){
   });
 
   // Adds a song to the queue
-  socket.on('queueUp', function(song){
+  socket.on('song add', function(song){
     // if song is valid, get info
     spotify.apiLookup(song, function(songInfo){
       socket.get('room', function(err,room) {
@@ -135,7 +135,7 @@ io.sockets.on('connection', function(socket){
           curQ[room].songs.push(songObject);
           songs[songObject.id] = songObject;
           votes[room][songObject.id] = {};
-          io.sockets.in(room).emit('songForList', songObject);
+          io.sockets.in(room).emit('song add', songObject);
           console.log("\n******curQ is: " + curQ[room].songs);
         }
       });
@@ -143,7 +143,7 @@ io.sockets.on('connection', function(socket){
   });
 
   // Start playing a song
-  socket.on('startPlayback', function(client){
+  socket.on('song start', function(client){
     if(curTimeout != null){
       clearTimeout(curTimeout);
     }
@@ -166,8 +166,8 @@ io.sockets.on('connection', function(socket){
       if(room != null && room in users) { 
         var name = clients[socket.id].name;
         removeFromArray(users[room], name);
-        io.sockets.in(room).emit('users', users[room].length);
-        io.sockets.in(room).emit('chat', 'system', name+' left');
+        io.sockets.in(room).emit('chat users', users[room].length);
+        io.sockets.in(room).emit('chat message', 'system', name+' left');
         for(var song in curQ[room].songs){
           var songId = curQ[room].songs[song].id; 
           console.log('\n********songid:'+songId +'********');
@@ -192,20 +192,20 @@ io.sockets.on('connection', function(socket){
     socket.get('room', function(err, room) {
       if (room in users) {  // Check for repeat names
         if (users[room].indexOf(name) >= 0) {
-          //socket.emit('name error', "Someone else is using that name.");
-          socket.emit('chat', 'system', 'Someone else is using that name.');
+          //socket.emit('chat name error', "Someone else is using that name.");
+          socket.emit('chat name', 'system', 'Someone else is using that name.');
           name = namer.numberIt(name);
         }
         if (name.length >= 25) {
           //socket.emit('name error', "Your name must be less than 25 characters long.");
-          socket.emit('chat', 'system', 'Your name must be less than 25 characters long.');
+          socket.emit('chat name', 'system', 'Your name must be less than 25 characters long.');
           name = namer.generalName();
         }
 
         removeFromArray(users[room], clients[socket.id].name);  // Remove old name
         users[room].push(name);  
 
-        io.sockets.in(room).emit('chat', 'system', clients[socket.id].name+' is now known as '+name);
+        io.sockets.in(room).emit('chat message', 'system', clients[socket.id].name+' is now known as '+name);
         clients[socket.id].name = name;
         sessionStore.get(socket.handshake.sessionID, function(err, session){
           // save new name in cookie
@@ -214,7 +214,7 @@ io.sockets.on('connection', function(socket){
             sessionStore.set(socket.handshake.sessionID, session);
           }
         });
-        socket.emit('name', name);
+        socket.emit('chat name', name);
       }
     });
 
@@ -226,8 +226,8 @@ io.sockets.on('connection', function(socket){
 
     socket.get('room', function(err,room) {
       var cleaned = sanitize(msg).xss();  // Sanitize name
-      socket.broadcast.to(room).emit('chat', name, cleaned, false);  // doesn't get sent back to the originating socket
-      socket.emit('chat', name, cleaned, true);   // send user cleaned version of their message
+      socket.broadcast.to(room).emit('chat message', name, cleaned, false);  // doesn't get sent back to the originating socket
+      socket.emit('chat message', name, cleaned, true);   // send user cleaned version of their message
     });
   });
 
@@ -241,7 +241,7 @@ io.sockets.on('connection', function(socket){
         if (curSong.status == 'cur') {   // current song might be over
          var diff = (new Date()).getTime() - curSong.startTime;
 
-	 socket.emit('changeSong', curSong.track.href, Math.floor(diff / (1000*60)), Math.floor((diff/1000)%60));  // start playback
+	 socket.emit('song change', curSong.track.href, Math.floor(diff / (1000*60)), Math.floor((diff/1000)%60));  // start playback
 
         }
       }
@@ -255,7 +255,7 @@ io.sockets.on('connection', function(socket){
   
     // send current song queue to user
     for(song in curQ[room].songs){
-      socket.emit('songForList', curQ[room].songs[song]);
+      socket.emit('song add', curQ[room].songs[song]);
     }
     console.log('JOINED '+room);
 
@@ -271,9 +271,9 @@ io.sockets.on('connection', function(socket){
     socket.join(room);           // actually join the room
   
     // update users info for everyone in the room
-    io.sockets.in(room).emit('users', users[room].length);
-    socket.broadcast.to(room).emit('chat', 'system', clients[socket.id].name + ' connected');
-    socket.emit('chat', 'system', 'Now listening in: ' + room);
+    io.sockets.in(room).emit('chat users', users[room].length);
+    socket.broadcast.to(room).emit('chat message', 'system', clients[socket.id].name + ' connected');
+    socket.emit('chat message', 'system', 'Now listening in: ' + room);
 
   });
 
@@ -312,7 +312,7 @@ function playNextSong(room){
     var songInfo = curQ[room].songs[curQ[room].curIdx];
     songInfo.status = 'cur';
     songInfo.startTime = (new Date()).getTime();
-    io.sockets.in(room).emit('changeSong', songInfo.track.href, 0,0);
+    io.sockets.in(room).emit('song change', songInfo.track.href, 0,0);
     
     curTimeout = setTimeout(function(){
       playNextSong(room);
