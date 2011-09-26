@@ -25,8 +25,23 @@ function searchForSongs(){
       }
 }
 
+function processResults (searchResults) {
+    var results = [];
+    for (var r in searchResults) {
+	var songName = getSongName(r);
+        var songArtist = getSongArtist(r);
+        if (found[songName + songArtist]) {
+            // see if availability is now true
+        }        
+        else {
+            // add to the found list
+        }
+    }  
+
+}
+
   // Displays results starting at a given value
-  function displaySearchResults(startAt) {
+  pfunction displaySearchResults(startAt) {
     var count = 0;  // how many things we've added
     var lastChecked = 0; // last result looked at
     //$("#results").text('');         
