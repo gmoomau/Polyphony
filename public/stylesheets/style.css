@@ -143,14 +143,14 @@ input {
   height: 12px;
   border: 1px solid;
   border-color: #808080;
-  float: left;
+  float: right;
   margin-right: 8px;
   margin-top: 3px;
   margin-bottom: 10px;
 }
 
 .voteSet {
-  float : right;
+  float : left;
 }
 
 .voteInner {
