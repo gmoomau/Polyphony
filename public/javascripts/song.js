@@ -79,12 +79,13 @@ function processResults (spotifyResults) {
       lastChecked = i;
     }
 
-    startAt += 5;
- 
     if(lastChecked >= 5) {
-      addHtml += '<p onClick="displaySearchResults('+(startAt-5)+')">Prev</p>';
-    }
+      var prevStart = startAt - 5;
+      addHtml += '<p onClick="displaySearchResults('+prevStart+')">Prev</p>';
+    } 
 
+   startAt += 5;
+ 
     if(lastChecked < searchResults.length - 1){
       addHtml += '<p onClick="displaySearchResults('+startAt+')">Next</p>';
     } 

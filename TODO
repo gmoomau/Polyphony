@@ -6,7 +6,6 @@ album support // may not be necessary since search can handle that basically
 useful error messages
 
 refactor code
-  move client side js out of .jade files
 
 playlist support?
 recommendations
@@ -17,8 +16,6 @@ custom error pages
 Layout changes:
   - auto-vote to 100% if you added a song
   - album art etc
-  - top 3 songs listed
-  - location of voting bars
   - song queue will continually grow even if there are 1000s of songs in it
   - colorscheme?
   - textbox (on / too) where you type in a room name and click enter and you go
