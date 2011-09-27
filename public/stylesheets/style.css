@@ -54,8 +54,8 @@ input {
   padding-top: 10px;
   background: #FFFFFF;
   color: #000000;
-
 }
+
 .scrolling::-webkit-scrollbar {
   width: 1.5ex;
   -webkit-border-radius: 1ex;
@@ -86,6 +86,10 @@ input {
 
 .unavailable{
     color: #880000;
+    cursor: pointer;
+}
+.available{
+  cursor: pointer;
 }
 
 .selectedVote {
@@ -119,6 +123,7 @@ input {
   height: 12px;
   border: 1px solid;
   border-color: #808080;
+  cursor: pointer;
 }
 
 .voteInner {
