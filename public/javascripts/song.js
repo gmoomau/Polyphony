@@ -81,13 +81,16 @@ function processResults (spotifyResults) {
 
     if(lastChecked >= 5) {
       var prevStart = startAt - 5;
-      addHtml += '<p onClick="displaySearchResults('+prevStart+')">Prev</p>';
+      addHtml += '<span onClick="displaySearchResults('+prevStart+')">Prev &nbsp;</span>';
     } 
+    else {
+	addHtml += '<span> &nbsp; &nbsp; &nbsp; &nbsp;</span>';
+    }
 
    startAt += 5;
  
     if(lastChecked < searchResults.length - 1){
-      addHtml += '<p onClick="displaySearchResults('+startAt+')">Next</p>';
+      addHtml += '<span onClick="displaySearchResults('+startAt+')">Next</span>';
     } 
     
     if(searchResults.length == 0){
