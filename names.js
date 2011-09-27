@@ -20,6 +20,3 @@ this.numberIt = function(base){
 }
 
 module.exports = this;
-
-
-

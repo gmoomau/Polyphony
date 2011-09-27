@@ -2,17 +2,17 @@
 
 // takes a song and returns the song's name
 function getSongName(song) {
-    return song.name;
+  return song.name;
 }
 
 // takes a song and returns the song's artist's name
 function getSongArtist(song) {
-    return song.artists[0].name;
+  return song.artists[0].name;
 }
 
 // returns the spotify link
 function getSongLink(song) {
-    return song.href;
+  return song.href;
 }
 
 // takes a track and a region as a string eg 'US' and returns a true/false value
