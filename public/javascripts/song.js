@@ -1,6 +1,8 @@
 // This file has all of the javascript functionality including control of sockets for dealing with changing/setting songs.
 
 
+var searchResults = [];  // an array storing all search results
+
 function queueSong(text) {
     $("#uri").val(text);
     $("#uri").click();
@@ -13,8 +15,7 @@ function searchForSongs(){
           prevSearch = songName;
           $.get("http://ws.spotify.com/search/1/track.json?q="+songName, {}, 
             function(rawData) {
-              results = jQuery.parseJSON(rawData);
-              found = {};
+              processResults(jQuery.parseJSON(rawData));
               displaySearchResults(0);
             },
           'text');
@@ -25,29 +26,43 @@ function searchForSongs(){
       }
 }
 
-function processResults (searchResults) {
-    var results = [];
-    for (var r in searchResults) {
-	var songName = getSongName(r);
-        var songArtist = getSongArtist(r);
-        if (found[songName + songArtist]) {
+// is given the search results from the spotify api and sets the global searchResults
+// 0,1,2... of song results
+function processResults (spotifyResults) {
+    searchResults = [];   // actually stores the song objects.  only has unique results. is indexed 0,1,2...
+                        // the found hash maps from songNames to an index to this array
+    var found = {}
+
+    for (var res in spotifyResults.tracks) {
+        var songResult = spotifyResults.tracks[res];
+	var songName = getSongName(songResult);
+        var songArtist = getSongArtist(songResult);
+        var songString = songName + songArtist;
+        if (songString in found) {
             // see if availability is now true
+            if (isSongAvailable(songResult,'US')) {
+                // since it is, we want to update the result to reflect this change
+		addSongAvailable(searchResults[found[songString]], 'US');
+                setSongLink(searchResults[found[songString]], getSongLink(songResult));
+            }
         }        
         else {
             // add to the found list
+            found[songString] = searchResults.length;
+            searchResults.push(songResult);
         }
     }  
-
 }
 
   // Displays results starting at a given value
-  pfunction displaySearchResults(startAt) {
+  function displaySearchResults(startAt) {
     var count = 0;  // how many things we've added
     var lastChecked = 0; // last result looked at
-    //$("#results").text('');         
+
     var addHtml = '';
-    for(var i=startAt;count < 5 && i<results.tracks.length; i++) {
-      var track = results.tracks[i];
+
+    for(var i=startAt;count < 5 && i<searchResults.length; i++) {
+      var track = searchResults[i];
       var regionClass = 'available';
 
       if (!isSongAvailable(track, 'US')){
@@ -56,21 +71,25 @@ function processResults (searchResults) {
 
       var artist = getSongArtist(track);
       var song = getSongName(track);
-      if (!found[artist+song]) {
-        var toAdd = artist + ' - '+song;
-        addHtml += '<p class="'+regionClass+'" onClick="queueSong('+"'"+getSongLink(track)+"'"+')">'+toAdd+'</p>';
+
+      var toAdd = artist + ' - '+song;
+      addHtml += '<p class="'+regionClass+'" onClick="queueSong('+"'"+getSongLink(track)+"'"+')">'+toAdd+'</p>';
         count++;
-        found[artist+song] = true;
-      }
+
       lastChecked = i;
     }
 
     startAt += 5;
-    if(lastChecked < results.tracks.length - 1){
-      addHtml += '<p onClick="displaySearchResults('+startAt+')">More</p>';
+ 
+    if(lastChecked >= 5) {
+      addHtml += '<p onClick="displaySearchResults('+(startAt-5)+')">Prev</p>';
+    }
+
+    if(lastChecked < searchResults.length - 1){
+      addHtml += '<p onClick="displaySearchResults('+startAt+')">Next</p>';
     } 
     
-    if(results.tracks.length == 0){
+    if(searchResults.length == 0){
       addHtml = '<p><em>No tracks found.</em></p>';
     }
 
@@ -116,14 +135,15 @@ socket.on('song add', function(songInfo){
       var songArtist = getSongArtist(songInfo);
       var songName = getSongName(songInfo);
 
-      var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName;
+      var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
       trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
       trackStr += "<input id='"+songInfo.id+"_voteValue' type='hidden' value='50' />";
-      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp;</div></div>"; // also closes the voteOuter
-      trackStr += "<span id='"+songInfo.id+"_voteSet'>Set!</span>"; 
-      trackStr += "<div class='voteOuter'>"; // doesn't need an id
-      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteAvg'>&nbsp;<div> </div></div>";  // also closes the voteOuter
-      trackStr += "</div></div><p />";  // also closes the track div and voteOuter
+      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp; </div></div>"; // also closes the voteOuter
+
+      trackStr += "<div class='voteOuterAvg'>"; // doesn't need an id
+      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteAvg'>&nbsp;</div></div>";  // also closes the voteOuter
+      trackStr += "<span class='voteSet' id='"+songInfo.id+"_voteSet'>Set!</span>"; 
+      trackStr += "</div><p />";  // also closes the track div and voteOuter
 
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
       $("#"+songInfo.id+"_voteSet").hide();
