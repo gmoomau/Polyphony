@@ -2,16 +2,15 @@ var sanitize = require('validator').sanitize,
     check = require('validator').check;
 
 var io;
-var namer;
+var namer = require('./names.js');
 var sessionStore;
 
 var users = {};          // keeps track of user name per room
 var clients = [];        // keeps track of info per socket
 
-this.initChat = function(io, sessStore, namer){
-  this.io = io;
-  this.sessionStore = sessStore;
-  this.namer = namer;
+this.initChat = function(socketIO, sessStore){
+  io = socketIO;
+  sessionStore = sessStore;
 }
 
 this.beginChat = function(socket){
@@ -67,7 +66,7 @@ this.beginChat = function(socket){
     });
   });
 
-  getName(socket);
+  this.getName(socket);
 }
 
 this.getName = function(socket){
@@ -83,6 +82,7 @@ this.getName = function(socket){
     socket.emit('chat name', clients[socket.id].name);
     if(session) {
       session.name = chatName;
+      
       sessionStore.set(socket.handshake.sessionID, session);
     }
   });
@@ -97,21 +97,25 @@ this.addUser = function(socket, room){
   }
 
   // update users info for everyone in the room
-  io.sockets.in(room).emit('chat users', users[room].length);
+  io.sockets.in(room).emit('chat users', users[room]);
   socket.broadcast.to(room).emit('chat message', 'system', clients[socket.id].name + ' connected');
   socket.emit('chat message', 'system', 'Now listening in: ' + room);
 }
 
 this.disconnect = function(socket, room){
-  socket.get('room', function(err, room) {
-    if(room != null && room in users) { 
-      var name = clients[socket.id].name;
-      removeFromArray(users[room], name);
-      io.sockets.in(room).emit('chat users', users[room].length);
-      io.sockets.in(room).emit('chat message', 'system', name+' left');
-      // maybe get rid of room from the users hashes if no one's in them?
-    }
-  });
+  if(room in users) { 
+    var name = clients[socket.id].name;
+    removeFromArray(users[room], name);
+    io.sockets.in(room).emit('chat users', users[room]);
+    io.sockets.in(room).emit('chat message', 'system', name+' left');
+    // maybe get rid of room from the users hashes if no one's in them?
+  }
 }
+
+function removeFromArray(array, element) {
+  var idx = array.indexOf(element);
+  array.splice(idx, 1);
+}
+
 
 module.exports = this;

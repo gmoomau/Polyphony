@@ -1,6 +1,6 @@
 function initChat(socket) {
-  socket.on('chat users', function(userCount){
-    $("#users").text(userCount + " people currently connected");
+  socket.on('chat users', function(userList){
+    $("#users").text(userList.length + " people currently connected");
   });
 
   socket.on('disconnect', function() {

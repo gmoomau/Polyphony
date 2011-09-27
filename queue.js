@@ -2,22 +2,22 @@ var io;
 
 var MAX_HISTORY = 3;     // max number of previously played songs to keep
 var curQ = {};           // current song queue per room. stores 'curIdx' and 'songs'
-                         // curQ.songs[curIdx] has status = 'cur', if idx < curIdx then status = 'prev'. o/w status = 'next'
+// curQ.songs[curIdx] has status = 'cur', if idx < curIdx then status = 'prev'. o/w status = 'next'
 var spotify = require('./spotApi.js');
 var votes = {};          // indexed by room then songId then user
 
 var songs = {};          // represents mapping from songID to songInfo.
-                         // NOTE: songInfo is also in curQ[room]...
+// NOTE: songInfo is also in curQ[room]...
 var unusedId = 0;        // Jankity jank
 
 var songTimeout = {};     // indexed by room
 
-this.initQueue = function(io) {
-  this.io = io;
+this.initQueue = function(socketIO) {
+  io = socketIO;
 }
 
-this.addQueueHandlers(socket) {
-  
+this.prepareQueue = function(socket) {
+
   // Adds a song to the queue
   socket.on('song add', function(song){
     // if song is valid, get info
@@ -52,10 +52,10 @@ this.addQueueHandlers(socket) {
 
   // User changed vote
   socket.on('vote', function(songId, vote) {
-      socket.get('room', function(err,room) { // get room from socket
-              votes[room][songId][socket.id] = vote;
-              setSongAvg(songId,room);
-      });
+    socket.get('room', function(err,room) { // get room from socket
+      votes[room][songId][socket.id] = vote;
+      setSongAvg(songId,room);
+    });
   });
 
 }
@@ -68,8 +68,8 @@ this.playNextSong = function(room) {
       curQ[room].songs[curQ[room].curIdx].status = 'prev';
     }
     if (curQ[room].curIdx == MAX_HISTORY) {  
-        // if we have the max number of songs in history already, clear a song out
-        // don't need to increment curIdx since songs get shifted
+      // if we have the max number of songs in history already, clear a song out
+      // don't need to increment curIdx since songs get shifted
       curQ[room].songs.shift();
     }
     else {  // have to increment curIdx this time since no shift happened
@@ -80,20 +80,23 @@ this.playNextSong = function(room) {
     songInfo.status = 'cur';
     songInfo.startTime = (new Date()).getTime();
     io.sockets.in(room).emit('song change', songInfo.href, 0,0);
-    
+
     songTimeout[room] = setTimeout(function(){
       playNextSong(room);
     }, songInfo.length*1000);
   }
 }
 
-this.setSongAvg = function(songId, room) {
+function setSongAvg(songId, room) {
   var avg = 0;
+  var numVotes = 0;
   for(var key in votes[room][songId]) {
     avg += votes[room][songId][key];
+    numVotes++;
   }
 
-  songs[songId].avg = avg / votes[room][songId].length;
+  console.log("votes so far: "+numVotes);
+  songs[songId].avg = avg / numVotes;
   console.log('****songid:'+songId+' avg: '+songs[songId].avg+'****');
   io.sockets.in(room).emit('vote update', songId, songs[songId].avg);
 }
@@ -105,7 +108,7 @@ this.addUser = function(socket, room){
       var curSong = curQ[room].songs[curQ[room].curIdx];
       if (curSong.status == 'cur') {   // current song might be over
         var diff = (new Date()).getTime() - curSong.startTime;
-        socket.emit('song change', curSong.href, Math.floor(diff / (1000*60)), Math.floor((diff/1000)%60));  // start playback
+        socket.emit('song change', curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
       }
     }
   }
@@ -121,22 +124,13 @@ this.addUser = function(socket, room){
 
 }
 
-this.disconnect = function(socket){
-  socket.get('room', function(err,room) {
-    if(room != null) { 
-      for(var song in curQ[room].songs){
-        var songId = curQ[room].songs[song].id;
-        console.log('\n********songid:'+songId +'********');
-        votes[room][songId][socket.id] = 0;
-        setSongAvg(songId,room);
-      }//queue
-    }
-  });
-}
-
-this.removeFromArray = function(array, element) {
-  var idx = array.indexOf(element);
-  array.splice(idx, 1);
+this.disconnect = function(socket, room){
+  for(var song in curQ[room].songs){
+    var songId = curQ[room].songs[song].id;
+    console.log('\n********songid:'+songId +'********');
+    votes[room][songId][socket.id] = 0;
+    setSongAvg(songId,room);
+  }//queue
 }
 
 module.exports = this;

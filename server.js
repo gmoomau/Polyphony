@@ -34,7 +34,7 @@ app.configure('production', function(){
 
 // Initializing variables?
 // find a better place to put these
-chat.initChat(io, sessionStore, namer);
+chat.initChat(io, sessionStore);
 queue.initQueue(io);
 
 
@@ -95,17 +95,21 @@ io.sockets.on('connection', function(socket){
   console.log("new client connected");
 
   chat.beginChat(socket);
-
-  queue.addQueueHandlers(socket);
+  queue.prepareQueue(socket);
 
   // when user disconnects, we have to remove username
   socket.on('disconnect', function() {
-    chat.disconnect(socket, room);
-    queue.disconnect(socket, room);
+    socket.get('room', function(err, room) {
+      if(room != null){
+        chat.disconnect(socket, room);
+        queue.disconnect(socket, room);
+      }
+    });
   });
 
   // join a user to a given room
   socket.on('join room', function(room) {
+    socket.join(room);           // put socket in socketroom
     chat.addUser(socket, room);
     queue.addUser(socket, room);
     
@@ -119,7 +123,6 @@ io.sockets.on('connection', function(socket){
         sessionStore.set(socket.handshake.sessionID, session);
       }
     });
-    socket.join(room);           // actually join the room
 
   });
 
