@@ -42,10 +42,10 @@ this.prepareQueue = function(socket) {
 
   // Start playing a song
   socket.on('song start', function(client){
-    if(curTimeout != null){
-      clearTimeout(curTimeout);
-    }
     socket.get('room', function(err,room) {
+      if(songTimeout[room] != null){
+        clearTimeout(songTimeout[room]);
+      }
       playNextSong(room);
     });
   });
@@ -60,7 +60,7 @@ this.prepareQueue = function(socket) {
 
 }
 
-this.playNextSong = function(room) {
+function playNextSong(room) {
   // if curIdx = 2 then we have 3 songs in the queue already, want to make sure
   // we have 4 songs in the queue, meaning that we have a new song to go to
   if(curQ[room].songs.length > curQ[room].curIdx+1){    
