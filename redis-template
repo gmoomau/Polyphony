@@ -7,13 +7,14 @@ I. Things to keep track of
 
   B. users
     i. Name
-    ii. Socket id
-      a. Currently stored in javascript array, why not move it?
-    iii. Votes so we can change easily
+    ii. Votes so we can change easily
+    iii. Room id
 
   C. rooms
     i. Name
     ii. Users
+      a. Ids for sending messages etc
+      b. Taken user names
     iii. Song queue
 
   D. songs
@@ -35,26 +36,28 @@ II. Proposed methods
          i. Can probably keep the queue up to date without straining system, since users won't frequently change votes...?
          ii. Most likely it'll be easier to just store integer number of total votes for a song rather than avg
            a. Only compute average when needed to display to user (possibly difficult race condition with users leaving since this needs two queries)
+     iii. Rooms are id'd by name instead of id since the user will always be joining by name and o/w we'd need to look it up somehow
 
    B. votes
-     i. vote:id:song.id      --> int song id
-     ii. vote:id:value       --> int value \in 0-100
+     i. vote:id:song.id         --> int song id
+     ii. vote:id:value          --> int value \in 0-100
 
    C. users
-     i. user:id:name         --> string
-     ii. user:id:votes       --> set of vote ids
+     i. user:id:name            --> string
+     ii. user:id:votes          --> set of vote ids
+     iii. user:id:room.name     --> string room name the user's in
 
    D. rooms
-     i. room:id:name         --> string
-     ii. room:id:users       --> set of user ids
-     iii. room:id:queue.id   --> int queue id
+     i. room:name:user.ids      --> set of user ids
+     ii. room:name:queue.id     --> int queue id
+     iii. room:name:user.names  --> set of user names in this room
 
    E. songs
-     i. song:id:spotify.obj  --> stringified version of json object
-     ii. song:id:votes       --> set of vote ids
-     iii. song:id:vote.total --> int value, sum of all votes
+     i. song:id:spotify.obj     --> stringified version of json object
+     ii. song:id:votes          --> set of vote ids
+     iii. song:id:vote.total    --> int value, sum of all votes
 
    F. queues
-     i. queue:id:next.songs  --> sorted set of song ids based on songvotes
-     ii. queue:id:prev.songs --> list of song ids previously played songs
-     iii. queue:id:cur.song  --> single song id 
+     i. queue:id:next.songs     --> sorted set of song ids based on songvotes
+     ii. queue:id:prev.songs    --> list of song ids previously played songs
+     iii. queue:id:cur.song     --> single song id 
