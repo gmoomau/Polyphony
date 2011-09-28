@@ -5,12 +5,17 @@ var io;
 var namer = require('./names.js');
 var sessionStore;
 
-var users = {};          // keeps track of user name per room
-var clients = [];        // keeps track of info per socket
+//var users = {};          // keeps track of user name per room
+//var clients = [];        // keeps track of info per socket
 
-this.initChat = function(socketIO, sessStore){
+var redis;
+var cookieHelper;
+
+this.initChat = function(socketIO, sessStore, rdb, ckh){
   io = socketIO;
   sessionStore = sessStore;
+  redis = rdb; 
+  cookieHelper = ckh;
 }
 
 this.beginChat = function(socket){
@@ -25,9 +30,12 @@ this.beginChat = function(socket){
       name = namer.hackerName();
     }
 
+    var userId = cookieHelper.getUserId('this should be something', socket);
+
     socket.get('room', function(err, room) {
-      if (room in users) {  // Check for repeat names
-        if (users[room].indexOf(name) >= 0) {
+      // Check for repeat names
+	    //	          if (room in users) { 
+       if (redis.isNameTaken(name,room)) { //users[room].indexOf(name) >= 0) {
           //socket.emit('chat name error', "Someone else is using that name.");
           socket.emit('chat message', 'system', 'Someone else is using that name.');
           name = namer.numberIt(name);
@@ -38,31 +46,36 @@ this.beginChat = function(socket){
           name = namer.generalName();
         }
 
-        removeFromArray(users[room], clients[socket.id].name);  // Remove old name
-        users[room].push(name);  
+        var oldName = redis.setUserName(userId,room,name);
 
-        io.sockets.in(room).emit('chat message', 'system', clients[socket.id].name+' is now known as '+name);
-        clients[socket.id].name = name;
+        //removeFromArray(users[room], clients[socket.id].name);  // Remove old name
+        //users[room].push(name);  
+
+        //io.sockets.in(room).emit('chat message', 'system', clients[socket.id].name+' is now known as '+name);
+        io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+name);
+        //clients[socket.id].name = name;
         sessionStore.get(socket.handshake.sessionID, function(err, session){
           // save new name in cookie
           if(!err && session){
             session.name = name;
             sessionStore.set(socket.handshake.sessionID, session);
           }
-        });
+	    });
         socket.emit('chat name', name);
-      }
+	    //		  }
     });
   });
 
   // Send message to everyone in the room
   socket.on('chat message', function(msg) {
-    var name = clients[socket.id].name;
+    var userId = cookieHelper.getUserId('this should be something', socket);   
+    //var name = clients[socket.id].name;
+    var userName = redis.getUserName(userId);
 
     socket.get('room', function(err,room) {
-      var cleaned = sanitize(msg).xss();  // Sanitize name
-      socket.broadcast.to(room).emit('chat message', name, cleaned, false);  // doesn't get sent back to the originating socket
-      socket.emit('chat message', name, cleaned, true);   // send user cleaned version of their message
+      var cleanedMsg = sanitize(msg).xss();  // Sanitize message
+      socket.broadcast.to(room).emit('chat message', userName, cleanedMsg, false);  // doesn't get sent back to the originating socket
+      socket.emit('chat message', userName, cleanedMsg, true);   // send user cleaned version of their message
     });
   });
 
@@ -78,35 +91,50 @@ this.getName = function(socket){
     else{
       chatName = namer.generalName();
     } 
-    clients[socket.id] = {name : chatName};
-    socket.emit('chat name', clients[socket.id].name);
-    if(session) {
-      session.name = chatName;
+    //clients[socket.id] = {name : chatName};
+    var userId = cookieHelper.getUserId('this should be something', socket);   
+    socket.get('room', function(err, room) {
+      redis.setUserName(userId,room, chatName);
+      socket.emit('chat name', chatName);//clients[socket.id].name);
+      if(session) {
+        session.name = chatName;
       
-      sessionStore.set(socket.handshake.sessionID, session);
-    }
+        sessionStore.set(socket.handshake.sessionID, session);
+      }
+    });
   });
 }
 
 this.addUser = function(socket, room){
-  if(room in users){ // if the room exists, add the new name
-    users[room].push(clients[socket.id].name);
+    // if the room exists, add the new name
+  var userId = cookieHelper.getUserId('this should be something', socket);   
+  if(redis.doesRoomExist(room)){ //room in users){ 
+      //users[room].push(clients[socket.id].name);
+      redis.addUserToRoom(userId, room);
   }
   else{ // create a new room
-    users[room] = [clients[socket.id].name];
+      // users[room] = [clients[socket.id].name];
+      redis.createRoom(userId, room);
   }
 
   // update users info for everyone in the room
-  io.sockets.in(room).emit('chat users', users[room]);
-  socket.broadcast.to(room).emit('chat message', 'system', clients[socket.id].name + ' connected');
+  var roomUsers = redis.getUsersInRoom(room);
+  // io.sockets.in(room).emit('chat users', users[room]);
+  var userName = redis.getUserName(userId);
+  //socket.broadcast.to(room).emit('chat message', 'system', clients[socket.id].name + ' connected');
+  socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
   socket.emit('chat message', 'system', 'Now listening in: ' + room);
 }
 
 this.disconnect = function(socket, room){
-  if(room in users) { 
-    var name = clients[socket.id].name;
-    removeFromArray(users[room], name);
-    io.sockets.in(room).emit('chat users', users[room]);
+  if(redis.doesRoomExist(room) ){ //room in users) { 
+    var userId = cookieHelper.getUserId('this should be something', socket);   
+    var name = redis.getUserName(userId);//clients[socket.id].name;
+    //removeFromArray(users[room], name);
+    redis.removeUserFromRoom(userId, room);
+    var roomUsers = redis.getUsersInRoom(room);
+    //io.sockets.in(room).emit('chat users', users[room]);
+    io.sockets.in(room).emit('chat users', roomUsers);;
     io.sockets.in(room).emit('chat message', 'system', name+' left');
     // maybe get rid of room from the users hashes if no one's in them?
   }

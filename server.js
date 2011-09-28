@@ -7,10 +7,13 @@ var app = express.createServer();
 var io = require('socket.io').listen(app);
 var sessionStore = new express.session.MemoryStore;// for session and cookies
 var parseCookie = require('connect').utils.parseCookie;
+
+var redis = require('./redis.js');
 var namer = require('./names.js');
 var chat = require('./chat.js');
 var queue = require('./queue.js');
-var redis = require('./redis.js');
+var cookieHelper = requre('./cookie.js');
+
 var check = require('validator').check;
 
 
@@ -36,9 +39,9 @@ app.configure('production', function(){
 
 // Initializing variables?
 // find a better place to put these
-chat.initChat(io, sessionStore);
-queue.initQueue(io);
 redis.initRedis();
+chat.initChat(io, sessionStore, redis, cookieHelper);
+queue.initQueue(io, redis);
 
 // Routes
 app.get('/', function(req, res){

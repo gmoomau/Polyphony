@@ -13,8 +13,11 @@ var unusedId = 0;        // Jankity jank
 
 var songTimeout = {};     // indexed by room
 
-this.initQueue = function(socketIO) {
+var redis;
+
+this.initQueue = function(socketIO, rdb) {
   io = socketIO;
+  redis = rdb;
 }
 
 this.prepareQueue = function(socket) {
