@@ -31,8 +31,8 @@ this.beginChat = function(socket){
     }
 
     var userId = cookieHelper.getUserId('this should be something', socket);
-
-    socket.get('room', function(err, room) {
+    var room = redis.getUserRoom(userId);
+    //socket.get('room', function(err, room) {
       // Check for repeat names
 	    //	          if (room in users) { 
        if (redis.isNameTaken(name,room)) { //users[room].indexOf(name) >= 0) {
@@ -63,7 +63,7 @@ this.beginChat = function(socket){
 	    });
         socket.emit('chat name', name);
 	    //		  }
-    });
+    //});
   });
 
   // Send message to everyone in the room
@@ -71,12 +71,12 @@ this.beginChat = function(socket){
     var userId = cookieHelper.getUserId('this should be something', socket);   
     //var name = clients[socket.id].name;
     var userName = redis.getUserName(userId);
-
-    socket.get('room', function(err,room) {
+    var room = redis.getUserRoom(userId);
+    //socket.get('room', function(err,room) {
       var cleanedMsg = sanitize(msg).xss();  // Sanitize message
       socket.broadcast.to(room).emit('chat message', userName, cleanedMsg, false);  // doesn't get sent back to the originating socket
       socket.emit('chat message', userName, cleanedMsg, true);   // send user cleaned version of their message
-    });
+      //});
   });
 
   this.getName(socket);
@@ -93,7 +93,8 @@ this.getName = function(socket){
     } 
     //clients[socket.id] = {name : chatName};
     var userId = cookieHelper.getUserId('this should be something', socket);   
-    socket.get('room', function(err, room) {
+    var room = redis.getUserRoom(userId);
+    //socket.get('room', function(err, room) {
       redis.setUserName(userId,room, chatName);
       socket.emit('chat name', chatName);//clients[socket.id].name);
       if(session) {
@@ -101,7 +102,7 @@ this.getName = function(socket){
       
         sessionStore.set(socket.handshake.sessionID, session);
       }
-    });
+      //});
   });
 }
 

@@ -20,6 +20,7 @@ Layout changes:
   - colorscheme?
   - textbox (on / too) where you type in a room name and click enter and you go
   - button you click to jump to current playtime? (eg for if you got hit by a commercial and want to get back to the same play spot as the group)
+  - add mute button to ignore starting up new songs
 
 limit room names to some length (25 chars?)
 

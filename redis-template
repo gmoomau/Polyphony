@@ -52,13 +52,17 @@ II. Proposed methods
      i. room:name:user.ids      --> set of user ids
      ii. room:name:queue.id     --> int queue id
      iii. room:name:user.names  --> set of user names in this room
+   
+     // Got rid of queue structure since it seemed like an unnecssary step to
+     //   go from a roomname to a queueid.
+     // Also changed idea from storing song ids to stringified song objects
+     //   since that's what we'd prefer to access since we pull stuff out of the
+     //   queues and send it to the client
+     iv. room:name:next.songs   --> sorted set of song objs based on songvotes
+     v. room:name:prev.songs    --> list of song objs previously played songs
+     vi. room:name:cur.song     --> single song obj
 
    E. songs
      i. song:id:spotify.obj     --> stringified version of json object
      ii. song:id:votes          --> set of vote ids
      iii. song:id:vote.total    --> int value, sum of all votes
-
-   F. queues
-     i. queue:id:next.songs     --> sorted set of song ids based on songvotes
-     ii. queue:id:prev.songs    --> list of song ids previously played songs
-     iii. queue:id:cur.song     --> single song id 
