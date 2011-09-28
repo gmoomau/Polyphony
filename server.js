@@ -12,7 +12,7 @@ var redis = require('./redis.js');
 var namer = require('./names.js');
 var chat = require('./chat.js');
 var queue = require('./queue.js');
-var cookieHelper = requre('./cookie.js');
+var cookieHelper = require('./cookie.js');
 
 var check = require('validator').check;
 

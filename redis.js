@@ -5,6 +5,7 @@ var redisClient = require('redis').createClient();
 // but in the future this might not be necessary once the 
 // redis db has been created/used
 this.initRedis = function() {
+  redisClient.flushall();
   redisClient.set('next.user.id', '0');
   redisClient.set('next.vote.id', '0');
   redisClient.set('next.queue.id', '0');
@@ -24,9 +25,12 @@ this.getNewUserId = function() {
 }
 
 
-this.isNameTaken = function (name, room) {
+this.isNameTaken = function (name, roomName) {
     // check room to see if the given name is taken
-    return false;
+    redisClient.sismember('room:'+roomName+'user.names',name, 
+      function(err,reply) {
+         return reply;
+    });
 }
 
 this.setUserName = function(userId, roomName, newName) {

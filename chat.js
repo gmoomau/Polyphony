@@ -31,7 +31,7 @@ this.beginChat = function(socket){
     }
 
     var userId = cookieHelper.getUserId('this should be something', socket);
-    var room = redis.getUserRoom(userId);
+    var room = redis.getUserRoom(userId);     // room name is returned
     //socket.get('room', function(err, room) {
       // Check for repeat names
 	    //	          if (room in users) { 

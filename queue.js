@@ -132,12 +132,12 @@ this.addUser = function(socket, room){
       }
     // send current song queue to user.  probably a better way to do this?
     // also should probably make sure that the next/prev/cur songs exist
-      var songQueue = redis.getRoomPrevSongs(roomName);
+      var songQueue = redis.getRoomPrevSongs(room);
       for(var song in songQueue) {
 	  socket.emit('song add prev', songQueue[song]);
       }
-      socket.emit('song add cur', redis.getRoomCurSong(roomName));
-      songQueue = redis.getRoomNextSongs(roomName);
+      socket.emit('song add cur', redis.getRoomCurSong(room));
+      songQueue = redis.getRoomNextSongs(room);
       for(var song in songQueue) {
 	  socket.emit('song add next', songQueue[song]);
       }    
