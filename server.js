@@ -10,7 +10,9 @@ var parseCookie = require('connect').utils.parseCookie;
 var namer = require('./names.js');
 var chat = require('./chat.js');
 var queue = require('./queue.js');
+var redis = require('./redis.js');
 var check = require('validator').check;
+
 
 // Configuration
 app.configure(function(){
@@ -36,7 +38,7 @@ app.configure('production', function(){
 // find a better place to put these
 chat.initChat(io, sessionStore);
 queue.initQueue(io);
-
+redis.initRedis();
 
 // Routes
 app.get('/', function(req, res){
@@ -93,6 +95,9 @@ io.set('authorization', function(data, accept){
 // Then we tell them the name they were given
 io.sockets.on('connection', function(socket){
   console.log("new client connected");
+
+  // get user an id and set it in the cookie
+  var new_user_id = redis.getNewUserId();
 
   chat.beginChat(socket);
   queue.prepareQueue(socket);

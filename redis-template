@@ -37,6 +37,7 @@ II. Proposed methods
          ii. Most likely it'll be easier to just store integer number of total votes for a song rather than avg
            a. Only compute average when needed to display to user (possibly difficult race condition with users leaving since this needs two queries)
      iii. Rooms are id'd by name instead of id since the user will always be joining by name and o/w we'd need to look it up somehow
+     iv. User ids are stored in a cookie
 
    B. votes
      i. vote:id:song.id         --> int song id
