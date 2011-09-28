@@ -32,6 +32,15 @@ input {
 #inputSongs {
 }
 
+#topSongContainer {
+  float: right;
+  width: 35%;
+}
+
+#topSongList {
+  font-size: 12px;  
+}
+
 #queue {
 }
 
@@ -102,14 +111,17 @@ input {
 
 .comingUp {
   color: #C0C0C0;
+  clear: both;
 }
 
 .alreadyPlayed {
   color: #808080;
+  clear: both;
 }
 
 .currentlyPlaying {
   color: #FFFFFF;
+  clear: both;
 }
 
 #finePrint {
@@ -124,6 +136,26 @@ input {
   border: 1px solid;
   border-color: #808080;
   cursor: pointer;
+  float: left;
+  margin-right: 8px;
+  margin-top: 3px;
+  margin-bottom: 10px;
+  clear: left;
+}
+
+.voteOuterAvg {
+  width: 100px;
+  height: 12px;
+  border: 1px solid;
+  border-color: #808080;
+  float: right;
+  margin-right: 8px;
+  margin-top: 3px;
+  margin-bottom: 10px;
+}
+
+.voteSet {
+  float : left;
 }
 
 .voteInner {

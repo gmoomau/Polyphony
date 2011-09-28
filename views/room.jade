@@ -13,7 +13,6 @@ script
   var room = '#{room}';
   var results;
   var prevSearch;
-  var found;
   var socket;
   $(function(){
 
@@ -37,6 +36,9 @@ body
       p
         span#chatName
         input#chatMessage(type="text")
+    #topSongContainer.box
+       h5 Top Songs
+       #topSongList
     #songStuff.box
       #inputSongs
         form#uriForm
