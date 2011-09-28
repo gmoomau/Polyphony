@@ -1,0 +1,60 @@
+This documents how we plan on using redis to solve our problems.
+
+I. Things to keep track of
+  A. votes
+    i. Per user for changing votes and for when a user leaves the room
+    i. Per song to compute the song average
+
+  B. users
+    i. Name
+    ii. Socket id
+      a. Currently stored in javascript array, why not move it?
+    iii. Votes so we can change easily
+
+  C. rooms
+    i. Name
+    ii. Users
+    iii. Song queue
+
+  D. songs
+    i. Object returned from Spotify API (as a string)
+    ii. Votes
+
+  E. queues
+    i. Songs coming up
+    ii. Songs played
+
+
+II. Proposed methods
+   A. General
+     i. Anywhere labelled 'id' will have an appropriate var in redis foo.next.id, incremented before usage
+       a. Using int 'id's instead of sha1-ing things to generate an id since it seems easier, and have most likely have smaller keys
+     ii.  We don't need to keep track of order of anything really except for songs in the queue
+       a. Therefore can use sets instead of lists.  I don't think lists can do member searches, so this is doubly good.
+       b. The queue should be a sorted set based on song avg vote values
+         i. Can probably keep the queue up to date without straining system, since users won't frequently change votes...?
+         ii. Most likely it'll be easier to just store integer number of total votes for a song rather than avg
+           a. Only compute average when needed to display to user (possibly difficult race condition with users leaving since this needs two queries)
+
+   B. votes
+     i. vote:id:song.id      --> int song id
+     ii. vote:id:value       --> int value \in 0-100
+
+   C. users
+     i. user:id:name         --> string
+     ii. user:id:votes       --> set of vote ids
+
+   D. rooms
+     i. room:id:name         --> string
+     ii. room:id:users       --> set of user ids
+     iii. room:id:queue.id   --> int queue id
+
+   E. songs
+     i. song:id:spotify.obj  --> stringified version of json object
+     ii. song:id:votes       --> set of vote ids
+     iii. song:id:vote.total --> int value, sum of all votes
+
+   F. queues
+     i. queue:id:next.songs  --> sorted set of song ids based on songvotes
+     ii. queue:id:prev.songs --> list of song ids previously played songs
+     iii. queue:id:cur.song  --> single song id 
