@@ -14,10 +14,12 @@ var spotify = require('./spotApi.js');
 var songTimeout = {};     // indexed by room
 
 var redis;
+var cookieHelper;
 
-this.initQueue = function(socketIO, rdb) {
+this.initQueue = function(socketIO, rdb, ckh) {
   io = socketIO;
   redis = rdb;
+  cookieHelper = ckh;
 }
 
 this.prepareQueue = function(socket) {
@@ -48,7 +50,7 @@ this.prepareQueue = function(socket) {
 
   // Start playing a song
   socket.on('song start', function(client){
-    var userId = cookieHelper.getUserId('this should be something', socket);
+    var userId = cookieHelper.getUserId(socket);
     var room = redis.getUserRoom(userId);
 
     //socket.get('room', function(err,room) {
@@ -61,7 +63,7 @@ this.prepareQueue = function(socket) {
 
   // User changed vote
   socket.on('vote', function(songId, vote) {
-    var userId = cookieHelper.getUserId('this should be something', socket);
+    var userId = cookieHelper.getUserId(socket);
     var room = redis.getUserRoom(userId);
     var voteId = redis.getVoteId(userId, songId);
     var newSongAvg = redis.updateVote(songId, voteId, vote);
@@ -123,7 +125,7 @@ this.addUser = function(socket, room){
     // otherwise it will initialize all the queue stuff for us
     if (!redis.addRoom(room)) {// if (room in curQ){  // if the room already exists, increment counts
      // start song playback
-      var curSong = redis.getCurrentSong(room);//   if (curQ[room].curIdx >= 0) {
+      var curSong = redis.getRoomCurSong(room);//   if (curQ[room].curIdx >= 0) {
       if (curSong != '') {//     var curSong = curQ[room].songs[curQ[room].curIdx];
         curSong = JSON.parse(curSong);
   //     if (curSong.status == 'cur') {   // current song might be over
@@ -160,7 +162,7 @@ this.addUser = function(socket, room){
 }
 
 this.disconnect = function(socket, room){
-    var userId = cookieHelper.getUserId('this should be something', socket);
+    var userId = cookieHelper.getUserId(socket);
     var userVotes = redis.getUserVotes(userId);
     for(var voteId in userVotes) {
       redis.removeVote(voteId);

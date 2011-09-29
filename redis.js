@@ -1,26 +1,29 @@
-var redisClient = require('redis').createClient();
+var redis = require('redis');
+var redisClient = redis.createClient();
+var namer = require('./names.js');
 
 // initializes stuff for our redis connection.
 // for now sets all of the necessary next ids to be 0
 // but in the future this might not be necessary once the 
 // redis db has been created/used
 this.initRedis = function() {
+  redis.debug_mode = true;
   redisClient.flushall();
-  redisClient.set('next.user.id', '0');
-  redisClient.set('next.vote.id', '0');
-  redisClient.set('next.queue.id', '0');
-  redisClient.set('next.song.id', '0');
+  redisClient.set('next.user.id', 0);
+  redisClient.set('next.vote.id', 0);
+  redisClient.set('next.queue.id', 0);
+  redisClient.set('next.song.id', 0);
 }
 
 this.getNewUserId = function() {
+    console.log('\n************** getting new id: ');
     // returns a new user id, could be generalized to getNewId and take a
     // string argument which would be 'user', 'vote', 'queue' or 'song'
     // but that might hurt readability and flexibility if we don't want
     // all ids to function the same way 
     redisClient.incr('next.user.id', function(err,newid) {
-       if(!err) { 
+         console.log('\n************** newid: '+newid);
          return newid;
-       }
     });
 }
 
@@ -33,34 +36,82 @@ this.isNameTaken = function (name, roomName) {
     });
 }
 
+// if user name is already taken in the room, then we add digits to it to 
+// make it unique
+// if roomName == null, then we ignore that check entirely
 this.setUserName = function(userId, roomName, newName) {
-    // Remove old user name from room.usernames and user (if they exist)
-    // Set new name for user and room.usernames
-    // return the old user name
-    return 'bar';
+    console.log('\n************ changing user name');
+    var taken = false;
+    // Get old user name
+    redisClient.get('user:'+userId+':name', 
+      function(err, oldName) {
+        if (roomName != null) {
+           var roomUsersSet = 'room:'+roomName+':user.names';
+           // Remove old user name from room.usernames and user (if they exist)
+           redisClient.srem(roomUsersSet, oldName, function(err,res){})
+           var notAdded = false;
+           // Set username in the room if it doesn't exist
+           // if it does exist, modify the name w/ numbers and then try again
+           while(notAdded) {
+               redisClient.sadd(roomUsersSet, newName, function(err,reply){
+                  // reply is the # of elements added to the set. is 0 if the name was already in there
+	           if(reply== 1) { 
+                      notAdded = false;
+                   }
+                   else {
+                      newName = namer.numberIt();
+                      taken = true;
+                   }
+	       });
+           }
+        }
+        // Set new name for user
+        redisClient.set('user:'+userId+':name', newName, function(err,res) {});
+
+      });
+  // return false if username was taken
+  return taken;
 }
+
 
 this.getUserName = function(userId) {
     // return the user's name
-    return 'foo';
+    redisClient.get('user:'+userId+':name',
+      function(err, name) {
+         return name; 
+      }
+    );
+
 }
 
 this.getUserRoom = function(userId) {
     // return the name of the room that the user is in
-    return 'room';
+    redisClient.get('user:'+userId+':room', 
+      function(err,roomName) {
+         return roomName;
+      });
 }
 
 this.getRoomNextSongs = function(roomName) {
     // get the songs from the next up queue 
-    return [];
+    redisClient.get('room:'+roomName+':next.songs',
+      function(err, nextSongs) {
+         return nextSongs;
+      });
 }
 
 this.getRoomCurSong = function(roomName) {
-    return '';
+    redisClient.get('room:'+roomName+':cur.song',
+      function(err, curSong) {
+         return curSong;
+      });
 }
 
 this.getRoomPrevSongs = function(roomName) {
-    return [];
+    redisClient.get('room:'+roomName+':prev.songs',
+      function(err, prevSongs) {
+         return prevSongs;
+      });
 }
 
 
@@ -70,7 +121,6 @@ this.removeVote = function(voteId) {
     // remove vote from the song's set of votes
     // remove vote from the db
 }
-
 
 this.doesRoomExist = function(roomName) {
     // return true if the room already exists
@@ -82,12 +132,6 @@ this.addRoom = function(roomName) {
     // be sure to use SETNX for this stuff to avoid race condition
     // when two users try to add a room at the same time
     // return false if room already exists. o/w return true
-}
-
-this.getCurrentSong = function(roomName) {
-    // returns the room's currently playing song or an empty string
-    // if no song is playing
-    return '';
 }
 
 this.addUserToRoom = function(userId, roomName) {

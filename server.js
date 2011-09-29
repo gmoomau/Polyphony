@@ -40,8 +40,9 @@ app.configure('production', function(){
 // Initializing variables?
 // find a better place to put these
 redis.initRedis();
+cookieHelper.initCookieHelper(sessionStore);
 chat.initChat(io, sessionStore, redis, cookieHelper);
-queue.initQueue(io, redis);
+queue.initQueue(io, redis, cookieHelper);
 
 // Routes
 app.get('/', function(req, res){
@@ -99,8 +100,18 @@ io.set('authorization', function(data, accept){
 io.sockets.on('connection', function(socket){
   console.log("new client connected");
 
-  // get user an id and set it in the cookie
-  var new_user_id = redis.getNewUserId();
+  sessionStore.get(socket.handshake.sessionID, function(err, session){
+   // save new id in cookie
+      if(!err && session){
+       // get user an id and set it in the cookie
+       var newUserId = redis.getNewUserId();
+
+        console.log('\n*********** session found!' + newUserId);
+        session.userId = newUserId;
+        sessionStore.set(socket.handshake.sessionID, session);
+      }
+      else { console.log('\n*********** session NOT found!\n');}
+   });
 
   chat.beginChat(socket);
   queue.prepareQueue(socket);
@@ -117,6 +128,7 @@ io.sockets.on('connection', function(socket){
 
   // join a user to a given room
   socket.on('join room', function(room) {
+    console.log('\n******** joining a room');
     socket.join(room);           // put socket in socketroom
     chat.addUser(socket, room);
     queue.addUser(socket, room);

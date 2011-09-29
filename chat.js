@@ -19,9 +19,9 @@ this.initChat = function(socketIO, sessStore, rdb, ckh){
 }
 
 this.beginChat = function(socket){
-
   // Change the chat name for a user
   socket.on('chat name', function(name) {
+    console.log('\n******** changing chat name');
     // Sanitize name
     try{
       check(name).regex(/^[-a-z0-9 _]+$/i);
@@ -30,23 +30,20 @@ this.beginChat = function(socket){
       name = namer.hackerName();
     }
 
-    var userId = cookieHelper.getUserId('this should be something', socket);
+    var userId = cookieHelper.getUserId(socket);
     var room = redis.getUserRoom(userId);     // room name is returned
+    var oldName = redis.getUserName(userId);  
     //socket.get('room', function(err, room) {
       // Check for repeat names
 	    //	          if (room in users) { 
-       if (redis.isNameTaken(name,room)) { //users[room].indexOf(name) >= 0) {
-          //socket.emit('chat name error', "Someone else is using that name.");
-          socket.emit('chat message', 'system', 'Someone else is using that name.');
-          name = namer.numberIt(name);
-        }
         if (name.length >= 25) {
           //socket.emit('chat name error', "Your name must be less than 25 characters long.");
           socket.emit('chat name', 'system', 'Your name must be less than 25 characters long.');
           name = namer.generalName();
         }
-
-        var oldName = redis.setUserName(userId,room,name);
+        if (!redis.setUserName(userId,room,name)) {
+          socket.emit('chat message', 'system', 'Someone else is using that name.');
+        }
 
         //removeFromArray(users[room], clients[socket.id].name);  // Remove old name
         //users[room].push(name);  
@@ -68,7 +65,7 @@ this.beginChat = function(socket){
 
   // Send message to everyone in the room
   socket.on('chat message', function(msg) {
-    var userId = cookieHelper.getUserId('this should be something', socket);   
+    var userId = cookieHelper.getUserId(socket);   
     //var name = clients[socket.id].name;
     var userName = redis.getUserName(userId);
     var room = redis.getUserRoom(userId);
@@ -82,7 +79,9 @@ this.beginChat = function(socket){
   this.getName(socket);
 }
 
+// is called when user first connects and may have no room associated
 this.getName = function(socket){
+    console.log('\n************* chat getName');
   var chatName = '';
   sessionStore.get(socket.handshake.sessionID, function(err, session){
     if(!err && session && session.name){
@@ -92,14 +91,14 @@ this.getName = function(socket){
       chatName = namer.generalName();
     } 
     //clients[socket.id] = {name : chatName};
-    var userId = cookieHelper.getUserId('this should be something', socket);   
+    var userId = cookieHelper.getUserId(socket);   
     var room = redis.getUserRoom(userId);
+
     //socket.get('room', function(err, room) {
       redis.setUserName(userId,room, chatName);
       socket.emit('chat name', chatName);//clients[socket.id].name);
       if(session) {
-        session.name = chatName;
-      
+        session.name = chatName;      
         sessionStore.set(socket.handshake.sessionID, session);
       }
       //});
@@ -108,7 +107,7 @@ this.getName = function(socket){
 
 this.addUser = function(socket, room){
     // if the room exists, add the new name
-  var userId = cookieHelper.getUserId('this should be something', socket);   
+  var userId = cookieHelper.getUserId(socket);   
   if(redis.doesRoomExist(room)){ //room in users){ 
       //users[room].push(clients[socket.id].name);
       redis.addUserToRoom(userId, room);
@@ -120,16 +119,14 @@ this.addUser = function(socket, room){
 
   // update users info for everyone in the room
   var roomUsers = redis.getUsersInRoom(room);
-  // io.sockets.in(room).emit('chat users', users[room]);
   var userName = redis.getUserName(userId);
-  //socket.broadcast.to(room).emit('chat message', 'system', clients[socket.id].name + ' connected');
   socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
   socket.emit('chat message', 'system', 'Now listening in: ' + room);
 }
 
 this.disconnect = function(socket, room){
   if(redis.doesRoomExist(room) ){ //room in users) { 
-    var userId = cookieHelper.getUserId('this should be something', socket);   
+    var userId = cookieHelper.getUserId(socket);   
     var name = redis.getUserName(userId);//clients[socket.id].name;
     //removeFromArray(users[room], name);
     redis.removeUserFromRoom(userId, room);
