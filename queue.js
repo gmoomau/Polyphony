@@ -44,7 +44,7 @@ this.prepareQueue = function(socket) {
          if(songTimeout[room] != null){
            clearTimeout(songTimeout[room]);
          }
-         redis.changeSongs(room); 
+         redis.changeSongs(room, function(){}); 
        });
     });
   });
@@ -54,7 +54,7 @@ this.prepareQueue = function(socket) {
      // get the user's id
      cookieHelper.getUserId(socket, function(userId) {
         // get the room for sending message later, also get the vote to update
-        redis.waitOn([getUserRoom, [userId]], [getVoteId, [userId, songId]], function (room, voteId) {
+        redis.waitOn([redis.getUserRoom, [userId]], [redis.getVoteId, [userId, songId]], function (room, voteId) {
            // update the vote for the user
            redis.updateVote(songId, voteId, vote, function(newSongAvg) {
               // find the new top songs now that the song's score has changed
@@ -73,7 +73,8 @@ this.prepareQueue = function(socket) {
 this.addUser = function(socket, room){
     // addRoom will return false if the room already exists
     // otherwise it will initialize all the queue stuff for us
-    redis.addUserToRoom(room, function(roomExists) {
+  cookieHelper.getUserId(socket, function(userId) {
+    redis.addUserToRoom(userId, room, function(roomExists) {
       if(roomExists) {
        // start song playback
        redis.getRoomCurSong(room, function(curSong) {
@@ -84,7 +85,8 @@ this.addUser = function(socket, room){
          }
        });
       // send current song queue to user.  probably a better way to do this?
-        redis.waitOn([getRoomPrevSongs, [room]], [getRoomCurSongs, [room]], [getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
+       console.log('\n\n************* queue waitOn');
+        redis.waitOn([redis.getRoomPrevSongs, [room]], [redis.getRoomCurSong, [room]], [redis.getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
           for(var song in prevSongs){
             socket.emit('song add prev', songQueue[song]);
           }
@@ -98,7 +100,7 @@ this.addUser = function(socket, room){
 
       }  // end if room exits
     });
-
+ });  // end cookieHelper
 }
 
 this.disconnect = function(socket, room){
@@ -108,7 +110,7 @@ this.disconnect = function(socket, room){
          redis.removeVote(voteId, function(unused){});
        }
      });
-   }):
+   });
 }
 
 

@@ -93,21 +93,21 @@ this.getRoomNextSongs = function(roomName, callback) {
     // get the songs from the next up queue 
     redisClient.get('room:'+roomName+':next.songs',
       function(err, nextSongs) {
-           callback(nextSongs);
+           callback([]);
       });
 }
 
 this.getRoomCurSong = function(roomName, callback) {
     redisClient.get('room:'+roomName+':cur.song',
       function(err, curSong) {
-          callback(nextSongs);
+          callback('');
       });
 }
 
 this.getRoomPrevSongs = function(roomName, callback) {
     redisClient.get('room:'+roomName+':prev.songs',
       function(err, prevSongs) {
-          callback(prevSongs);
+          callback([]);
       });
 }
 
@@ -235,8 +235,8 @@ this.waitOn = function() {
      fnToIndex[redisFn] = i;
 
      var redisCallback = function(redisVal) { retVals[i] = redisVal; valuesReturned++; complete(); };  // I think the way this closure works is that i is what we want here.  I tested it out in a separate file at least.
-
      redisFnArgs.push(redisCallback);    // add callback to the arguments for the redis call
+
      redisFn.apply(this, redisFnArgs);   // call the redis function with the correct arguments including callback
   }
 
