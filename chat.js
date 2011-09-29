@@ -90,19 +90,21 @@ this.getName = function(socket){
     else{
       chatName = namer.generalName();
     } 
-    //clients[socket.id] = {name : chatName};
-    var userId = cookieHelper.getUserId(socket);   
-    var room = redis.getUserRoom(userId);
 
-    //socket.get('room', function(err, room) {
-      redis.setUserName(userId,room, chatName);
-      socket.emit('chat name', chatName);//clients[socket.id].name);
-      if(session) {
-        session.name = chatName;      
-        sessionStore.set(socket.handshake.sessionID, session);
-      }
-      //});
-  });
+    cookieHelper.getUserId(socket, function(userId) {
+       redis.getUserRoom(userId, function(room) {
+          // name we want might be taken so we accept the set name here
+               redis.setUserName(userId,room,chatName, function(setName) {
+                       socket.emit('chat name', setName);
+                       if(session) {
+                           session.name = setName;      
+                           sessionStore.set(socket.handshake.sessionID, session);
+                       }
+              }); //end set username
+           }); // end get user room
+        });   // end cookiehelper
+   });
+ console.log('\n************** end of chat get name ');
 }
 
 this.addUser = function(socket, room){

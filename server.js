@@ -104,17 +104,16 @@ io.sockets.on('connection', function(socket){
    // save new id in cookie
       if(!err && session){
        // get user an id and set it in the cookie
-       var newUserId = redis.getNewUserId();
-
-        console.log('\n*********** session found!' + newUserId);
-        session.userId = newUserId;
-        sessionStore.set(socket.handshake.sessionID, session);
+       redis.getNewUserId(function(newUserId) {
+          console.log('\n*********** session found!' + newUserId);
+          session.userId = newUserId;
+          sessionStore.set(socket.handshake.sessionID, session);
+          chat.beginChat(socket);
+          queue.prepareQueue(socket);
+       });
       }
-      else { console.log('\n*********** session NOT found!\n');}
    });
 
-  chat.beginChat(socket);
-  queue.prepareQueue(socket);
 
   // when user disconnects, we have to remove username
   socket.on('disconnect', function() {

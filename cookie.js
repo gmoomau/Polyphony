@@ -4,14 +4,16 @@ this.initCookieHelper = function(sess) {
     sessionStore = sess;
 }
 
-this.getUserId = function(socket) {
+// callback should take a single argument the userId
+this.getUserId = function(socket, callback) {
   var userId = null;
   sessionStore.get(socket.handshake.sessionID, function(err, session){
     if (session) {
       userId = session.userId;
+      callback(userId);
     }
    });
-  return userId;
+
 }
 
 module.exports = this;

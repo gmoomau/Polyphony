@@ -15,20 +15,15 @@ this.initRedis = function() {
   redisClient.set('next.song.id', 0);
 }
 
-this.getNewUserId = function() {
-    console.log('\n************** getting new id: ');
-    // returns a new user id, could be generalized to getNewId and take a
-    // string argument which would be 'user', 'vote', 'queue' or 'song'
-    // but that might hurt readability and flexibility if we don't want
-    // all ids to function the same way 
+// callback should accept a single argument, the new id
+this.getNewUserId = function(callback) {
     redisClient.incr('next.user.id', function(err,newid) {
-         console.log('\n************** newid: '+newid);
-         return newid;
+         callback(newid);
     });
 }
 
 
-this.isNameTaken = function (name, roomName) {
+this.isNameTaken = function (name, roomName, callback) {
     // check room to see if the given name is taken
     redisClient.sismember('room:'+roomName+'user.names',name, 
       function(err,reply) {
@@ -39,7 +34,7 @@ this.isNameTaken = function (name, roomName) {
 // if user name is already taken in the room, then we add digits to it to 
 // make it unique
 // if roomName == null, then we ignore that check entirely
-this.setUserName = function(userId, roomName, newName) {
+this.setUserName = function(userId, roomName, newName, callback) {
     console.log('\n************ changing user name');
     var taken = false;
     // Get old user name
@@ -74,7 +69,7 @@ this.setUserName = function(userId, roomName, newName) {
 }
 
 
-this.getUserName = function(userId) {
+this.getUserName = function(userId, callback) {
     // return the user's name
     redisClient.get('user:'+userId+':name',
       function(err, name) {
@@ -84,7 +79,7 @@ this.getUserName = function(userId) {
 
 }
 
-this.getUserRoom = function(userId) {
+this.getUserRoom = function(userId, callback) {
     // return the name of the room that the user is in
     redisClient.get('user:'+userId+':room', 
       function(err,roomName) {
@@ -92,7 +87,7 @@ this.getUserRoom = function(userId) {
       });
 }
 
-this.getRoomNextSongs = function(roomName) {
+this.getRoomNextSongs = function(roomName, callback) {
     // get the songs from the next up queue 
     redisClient.get('room:'+roomName+':next.songs',
       function(err, nextSongs) {
@@ -100,14 +95,14 @@ this.getRoomNextSongs = function(roomName) {
       });
 }
 
-this.getRoomCurSong = function(roomName) {
+this.getRoomCurSong = function(roomName, callback) {
     redisClient.get('room:'+roomName+':cur.song',
       function(err, curSong) {
          return curSong;
       });
 }
 
-this.getRoomPrevSongs = function(roomName) {
+this.getRoomPrevSongs = function(roomName, callback) {
     redisClient.get('room:'+roomName+':prev.songs',
       function(err, prevSongs) {
          return prevSongs;
@@ -115,36 +110,36 @@ this.getRoomPrevSongs = function(roomName) {
 }
 
 
-this.removeVote = function(voteId) {
+this.removeVote = function(voteId, callback) {
     // get the vote's value and vote's songId
     // subtract value from the song's vote.total
     // remove vote from the song's set of votes
     // remove vote from the db
 }
 
-this.doesRoomExist = function(roomName) {
+this.doesRoomExist = function(roomName, callback) {
     // return true if the room already exists
     return true;
 }
 
-this.addRoom = function(roomName) {
+this.addRoom = function(roomName, callback) {
     // add a new room with a given roomName to the server
     // be sure to use SETNX for this stuff to avoid race condition
     // when two users try to add a room at the same time
     // return false if room already exists. o/w return true
 }
 
-this.addUserToRoom = function(userId, roomName) {
+this.addUserToRoom = function(userId, roomName, callback) {
     // set user's room id
     // add user's id and user's name to the room
 }
 
-this.removeUserFromRoom = function(userId, roomName) {
+this.removeUserFromRoom = function(userId, roomName, callback) {
     // remove roomName from user's room id
     // remove username and user id from room
 }
 
-this.getUsersInRoom = function(roomName) {
+this.getUsersInRoom = function(roomName, callback) {
     // returns a list of user id/names
     return [];
 }
@@ -152,18 +147,18 @@ this.getUsersInRoom = function(roomName) {
 
 // Takes a song object, converts it to a string and adds it
 // to the database.  Returns the id of the song
-this.addSong = function(songObj) {
+this.addSong = function(songObj, callback) {
     // Get a new id for the song and set it
     // Convert object to a string
     // Add spotifyObject, votes and vote.total to the database
     return 1;
 }
 
-this.addSongToRoom = function(songId, roomName) {
+this.addSongToRoom = function(songId, roomName, callback) {
     // add song to the room's next.songs sorted set
 }
 
-this.getNewSongId = function() {
+this.getNewSongId = function(, callback) {
     redisClient.incr('next.user.id', function(err,newid) {
        if(!err) { 
          return newid;
@@ -171,19 +166,19 @@ this.getNewSongId = function() {
     });   
 }
 
-this.getNewVoteId = function() {
+this.getNewVoteId = function(, callback) {
     // returns a new vote Id which can be used
     return 1;
 }
 
-this.getVoteId = function(userId, songId) {
+this.getVoteId = function(userId, songId, callback) {
     // return the id of the vote associated with this user and song
     // get it by intersecting the user's vote list and song's vote list
     // return a new id if the vote is not found
     return 1;
 }
 
-this.updateVote = function(songId, voteId, newValue) {
+this.updateVote = function(songId, voteId, newValue, callback) {
     // get the old vote value, and subtract it from the song's vote total
     // updates a votes value, and add newValue to the song's vote total
     // set value of song in sorted set 
@@ -191,13 +186,13 @@ this.updateVote = function(songId, voteId, newValue) {
     return 75;
 }
 
-this.getSongAvg = function(songId) {
+this.getSongAvg = function(songId, callback) {
     // compute the song's new score 
     // return the song's new voter average
     return 75;
 }
 
-this.getTopSongs = function(roomName, numSongs) {
+this.getTopSongs = function(roomName, numSongs, callback) {
     // Get the top numSongs number of song objs from the room's next queue
     // and return it
     return [];
