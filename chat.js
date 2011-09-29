@@ -35,65 +35,37 @@ this.beginChat = function(socket){
     }
 
     cookieHelper.getUserId(socket, function(userId) {
-       var room = null, var oldName = null;
-       function callback() {
-           if (room != null && oldName != null) {
-               redis.setUserName(userId,room,name, function(taken) {
-                    if(taken) {
-                      socket.emit('chat message', 'system', 'Someone else is using that name.');
-                    }
+       redis.waitOn([getUserRoom, [userId]], [getUserName, [userId]], function(room,oldName) {
+           redis.setUserName(userId,room,name, function(taken) {
+               if(taken) {
+                  socket.emit('chat message', 'system', 'Someone else is using that name.');
+               }
 
-                    io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+name);
-                    sessionStore.get(socket.handshake.sessionID, function(err, session){
-                            // save new name in cookie
-                            if(!err && session){
-                                session.name = name;
-                                sessionStore.set(socket.handshake.sessionID, session);
-                            }
-                        });
-                    socket.emit('chat name', name);
-                   });  // end of setUserName
-           }
-       }
-
-       redis.getUserRoom(userId, function(r) {
-               room = r;
-               callback();
-           });
-
-       redis.getUserName(userId, function(old) {
-               oldName = old;
-               callback();
-           });
-        });
-
-      }); // end of  on 'chat name'
+               io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+name);
+               sessionStore.get(socket.handshake.sessionID, function(err, session){
+                      // save new name in cookie
+                      if(!err && session){
+                          session.name = name;
+                          sessionStore.set(socket.handshake.sessionID, session);
+                      }
+                });
+                socket.emit('chat name', name);
+          });  // end set user name
+       });  // end waitOn
+    }); // end of cookieHelper
+  }); // end of on 'chat name'
 
 
   // Send message to everyone in the room
   socket.on('chat message', function(msg) {
     cookieHelper.getUserId(socket, function(userId) {
-       var room = null, var oldName = null;
-       function callback() {
-           if (room != null && oldName != null) {
-               var cleanedMsg = sanitize(msg).xss();  // Sanitize message
-               socket.broadcast.to(room).emit('chat message', userName, cleanedMsg, false);  // doesn't get sent back to the originating socket
-               socket.emit('chat message', userName, cleanedMsg, true);   // send user cleaned version of their message
-           }
-       }
-
-       redis.getUserRoom(userId, function(r) {
-               room = r;
-               callback();
-           });
-
-       redis.getUserName(userId, function(old) {
-               oldName = old;
-               callback();
-           });
-        });
-        
-   });
+       redis.waitOn([getUserRoom, [userId]], [getUserName, [userId]], function(room,userName) {
+           var cleanedMsg = sanitize(msg).xss();  // Sanitize message
+           socket.broadcast.to(room).emit('chat message', userName, cleanedMsg, false);  // doesn't get sent back to the originating socket
+           socket.emit('chat message', userName, cleanedMsg, true);   // send user cleaned version of their message
+      }); // end wait on
+   }); // end cookie helper
+  }); // end socket on message
 
   this.getName(socket);
 }
@@ -127,42 +99,27 @@ this.getName = function(socket){
 }
 
 this.addUser = function(socket, room){
-    // if the room exists, add the new name
-  var userId = cookieHelper.getUserId(socket);   
-  if(redis.doesRoomExist(room)){ //room in users){ 
-      //users[room].push(clients[socket.id].name);
-      redis.addUserToRoom(userId, room);
-  }
-  else{ // create a new room
-      // users[room] = [clients[socket.id].name];
-      redis.createRoom(userId, room);
-  }
+  cookieHelper.getUserId(socket, function(userId) {
+    redis.addUserToRoom(room,userId, function() {   // will create the room if needed
+      // update users info for everyone in the room
+      redis.waitOn([getUsersInRoom, [room]], [getUserName, [userId]], function(roomUsers,userName) {
+        socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
+       socket.emit('chat message', 'system', 'Now listening in: ' + room);
+      });
+    });
+  });
 
-  // update users info for everyone in the room
-  var roomUsers = redis.getUsersInRoom(room);
-  var userName = redis.getUserName(userId);
-  socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
-  socket.emit('chat message', 'system', 'Now listening in: ' + room);
 }
 
 this.disconnect = function(socket, room){
-  if(redis.doesRoomExist(room) ){ //room in users) { 
-    var userId = cookieHelper.getUserId(socket);   
-    var name = redis.getUserName(userId);//clients[socket.id].name;
-    //removeFromArray(users[room], name);
-    redis.removeUserFromRoom(userId, room);
-    var roomUsers = redis.getUsersInRoom(room);
-    //io.sockets.in(room).emit('chat users', users[room]);
-    io.sockets.in(room).emit('chat users', roomUsers);;
-    io.sockets.in(room).emit('chat message', 'system', name+' left');
-    // maybe get rid of room from the users hashes if no one's in them?
-  }
+  cookieHelper.getUserId(socket, function(userId) {
+     redis.waitOn([getUserName,[userId]], [removeUserFroomRoom, [userId, room]], function(name,unused) {
+       redis.getUsersInRoom(room, function(roomUsers) {
+           io.sockets.in(room).emit('chat users', roomUsers);;
+           io.sockets.in(room).emit('chat message', 'system', name+' left');
+        });
+     });
+  });
 }
-
-function removeFromArray(array, element) {
-  var idx = array.indexOf(element);
-  array.splice(idx, 1);
-}
-
 
 module.exports = this;

@@ -123,7 +123,7 @@ this.prepareQueue = function(socket) {
 this.addUser = function(socket, room){
     // addRoom will return false if the room already exists
     // otherwise it will initialize all the queue stuff for us
-    if (!redis.addRoom(room)) {// if (room in curQ){  // if the room already exists, increment counts
+    if (!redis.addRoom(room, function(){})) {// if (room in curQ){  // if the room already exists, increment counts
      // start song playback
       var curSong = redis.getRoomCurSong(room);//   if (curQ[room].curIdx >= 0) {
       if (curSong != '') {//     var curSong = curQ[room].songs[curQ[room].curIdx];

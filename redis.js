@@ -132,15 +132,18 @@ this.addRoom = function(roomName, callback) {
     callback(true);
 }
 
+// doesn't return anything
 this.addUserToRoom = function(userId, roomName, callback) {
+    // see if room exists, if not create it.
     // set user's room id
     // add user's id and user's name to the room
-    callback(true);
+    callback();
 }
 
 this.removeUserFromRoom = function(userId, roomName, callback) {
     // remove roomName from user's room id
     // remove username and user id from room
+    // maybe remove room if no one's in here?
     callback(true);
 }
 
@@ -202,5 +205,41 @@ this.getTopSongs = function(roomName, numSongs, callback) {
     // and return it
     callback([]);
 }
+
+// this function takes any number of arguments arg1, arg2,..., argN, but expects:
+// argN is a callback function to be called when all redis calls have returned
+// arg1...argN-1 look like [redisFnToCall, redisArgs] note that redisArgs must be an array
+//   so that we can push the appropriate callback into it
+// when they've completed, callback will be called with the return values in order
+//   eg: redis.waitOn([getSongAvg, [3]], [getNewSongId, []], callback)
+//       callback will be called as: callback(song3sAvg, newSongId);
+// should be used anytime there are multiple redis calls that are needed, but don't rely on each
+// other.  not necessarily just getter functions either
+this.waitOn = function() {
+  var retVals = [];  // values returned from other redis calls
+  var fnToIndex = {};    // maps the function called to the index it should have in retVals
+  var callback = arguments[arguments.length-1];
+  var valuesReturned = 0;       // keeps track of how many calls have been completed
+
+  function complete() {
+      if(valuesReturned == retVals.length) {
+        callback.apply(this, retVals);
+      }
+  }
+
+  for(var i=0; i<arguments.length-1; i++) {  // subtract 1 from arguments.length since last arg is the callback
+     var redisFn = arguments[i][0];
+     var redisFnArgs = arguments[i][1];
+     retVals.push(true);  // push something into retVals so that it has the correct length
+     fnToIndex[redisFn] = i;
+
+     var redisCallback = function(redisVal) { retVals[i] = redisVal; valuesReturned++; complete(); };  // I think the way this closure works is that i is what we want here.  I tested it out in a separate file at least.
+
+     redisFnArgs.push(redisCallback);    // add callback to the arguments for the redis call
+     redisFn.apply(this, redisFnArgs);   // call the redis function with the correct arguments including callback
+  }
+
+}
+
 
 module.exports = this;
