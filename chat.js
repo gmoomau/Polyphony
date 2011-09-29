@@ -100,7 +100,7 @@ this.getName = function(socket){
 
 this.addUser = function(socket, room){
   cookieHelper.getUserId(socket, function(userId) {
-    redis.addUserToRoom(room,userId, function() {   // will create the room if needed
+    redis.addUserToRoom(room,userId, function(unused) {   // will create the room if needed
       // update users info for everyone in the room
       redis.waitOn([getUsersInRoom, [room]], [getUserName, [userId]], function(roomUsers,userName) {
         socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');

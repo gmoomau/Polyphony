@@ -129,7 +129,7 @@ io.sockets.on('connection', function(socket){
   socket.on('join room', function(room) {
     console.log('\n******** joining a room');
     socket.join(room);           // put socket in socketroom
-    chat.addUser(socket, room);
+    chat.addUser(socket, room);  
     queue.addUser(socket, room);
     
     console.log('JOINED '+room);

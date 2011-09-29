@@ -132,12 +132,13 @@ this.addRoom = function(roomName, callback) {
     callback(true);
 }
 
-// doesn't return anything
+// returns opposite of addRoom:
+//   true if the Room already existed, false o/w
 this.addUserToRoom = function(userId, roomName, callback) {
     // see if room exists, if not create it.
     // set user's room id
     // add user's id and user's name to the room
-    callback();
+    callback(true);
 }
 
 this.removeUserFromRoom = function(userId, roomName, callback) {
