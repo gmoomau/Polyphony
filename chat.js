@@ -29,52 +29,71 @@ this.beginChat = function(socket){
     catch (e){
       name = namer.hackerName();
     }
+    if (name.length >= 25) {
+       socket.emit('chat name', 'system', 'Your name must be less than 25 characters long.');
+       name = namer.generalName();
+    }
 
-    var userId = cookieHelper.getUserId(socket);
-    var room = redis.getUserRoom(userId);     // room name is returned
-    var oldName = redis.getUserName(userId);  
-    //socket.get('room', function(err, room) {
-      // Check for repeat names
-	    //	          if (room in users) { 
-        if (name.length >= 25) {
-          //socket.emit('chat name error', "Your name must be less than 25 characters long.");
-          socket.emit('chat name', 'system', 'Your name must be less than 25 characters long.');
-          name = namer.generalName();
-        }
-        if (!redis.setUserName(userId,room,name)) {
-          socket.emit('chat message', 'system', 'Someone else is using that name.');
-        }
+    cookieHelper.getUserId(socket, function(userId) {
+       var room = null, var oldName = null;
+       function callback() {
+           if (room != null && oldName != null) {
+               redis.setUserName(userId,room,name, function(taken) {
+                    if(taken) {
+                      socket.emit('chat message', 'system', 'Someone else is using that name.');
+                    }
 
-        //removeFromArray(users[room], clients[socket.id].name);  // Remove old name
-        //users[room].push(name);  
+                    io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+name);
+                    sessionStore.get(socket.handshake.sessionID, function(err, session){
+                            // save new name in cookie
+                            if(!err && session){
+                                session.name = name;
+                                sessionStore.set(socket.handshake.sessionID, session);
+                            }
+                        });
+                    socket.emit('chat name', name);
+                   });  // end of setUserName
+           }
+       }
 
-        //io.sockets.in(room).emit('chat message', 'system', clients[socket.id].name+' is now known as '+name);
-        io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+name);
-        //clients[socket.id].name = name;
-        sessionStore.get(socket.handshake.sessionID, function(err, session){
-          // save new name in cookie
-          if(!err && session){
-            session.name = name;
-            sessionStore.set(socket.handshake.sessionID, session);
-          }
-	    });
-        socket.emit('chat name', name);
-	    //		  }
-    //});
-  });
+       redis.getUserRoom(userId, function(r) {
+               room = r;
+               callback();
+           });
+
+       redis.getUserName(userId, function(old) {
+               oldName = old;
+               callback();
+           });
+        });
+
+      }); // end of  on 'chat name'
+
 
   // Send message to everyone in the room
   socket.on('chat message', function(msg) {
-    var userId = cookieHelper.getUserId(socket);   
-    //var name = clients[socket.id].name;
-    var userName = redis.getUserName(userId);
-    var room = redis.getUserRoom(userId);
-    //socket.get('room', function(err,room) {
-      var cleanedMsg = sanitize(msg).xss();  // Sanitize message
-      socket.broadcast.to(room).emit('chat message', userName, cleanedMsg, false);  // doesn't get sent back to the originating socket
-      socket.emit('chat message', userName, cleanedMsg, true);   // send user cleaned version of their message
-      //});
-  });
+    cookieHelper.getUserId(socket, function(userId) {
+       var room = null, var oldName = null;
+       function callback() {
+           if (room != null && oldName != null) {
+               var cleanedMsg = sanitize(msg).xss();  // Sanitize message
+               socket.broadcast.to(room).emit('chat message', userName, cleanedMsg, false);  // doesn't get sent back to the originating socket
+               socket.emit('chat message', userName, cleanedMsg, true);   // send user cleaned version of their message
+           }
+       }
+
+       redis.getUserRoom(userId, function(r) {
+               room = r;
+               callback();
+           });
+
+       redis.getUserName(userId, function(old) {
+               oldName = old;
+               callback();
+           });
+        });
+        
+   });
 
   this.getName(socket);
 }

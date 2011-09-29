@@ -163,7 +163,7 @@ this.addSongToRoom = function(songId, roomName, callback) {
     // add song to the room's next.songs sorted set
 }
 
-this.getNewSongId = function(, callback) {
+this.getNewSongId = function(callback) {
     redisClient.incr('next.user.id', function(err,newid) {
        if(!err) { 
            callback(newid);
@@ -171,7 +171,7 @@ this.getNewSongId = function(, callback) {
     });   
 }
 
-this.getNewVoteId = function(, callback) {
+this.getNewVoteId = function(callback) {
     // returns a new vote Id which can be used
     callback(1);
 }
