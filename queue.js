@@ -29,7 +29,8 @@ this.prepareQueue = function(socket) {
           var songObject = JSON.parse(songInfo).track;
           redis.addSong(songObject, function(songId) {
              redis.addSongToRoom(songId,room, function(){  // wait until song is added to alert users (in case something bad happens/so they can't vote)
-                io.sockets.in(room).emit('song add', songObject);
+                     console.log('\n\n*********** songid: ' + songId);
+                     io.sockets.in(room).emit('song add', songObject, songId, 'next');
              });   
           });
         }
@@ -51,20 +52,24 @@ this.prepareQueue = function(socket) {
 
   // User changed vote
   socket.on('vote', function(songId, vote) {
+     console.log('\n\n************* user is voting!' + songId + ' ' +vote);
      // get the user's id
      cookieHelper.getUserId(socket, function(userId) {
         // get the room for sending message later, also get the vote to update
         redis.waitOn([redis.getUserRoom, [userId]], [redis.getVoteId, [userId, songId]], function (room, voteId) {
+          console.log('\n\n************* vote: done waitOn!' + room + ' ' +voteId);
            // update the vote for the user
            redis.updateVote(songId, voteId, vote, function(newSongAvg) {
+              console.log('\n\n************* updated vote!' + songId + ' ' +vote);
               // find the new top songs now that the song's score has changed
               redis.getTopSongs(room, NUM_TOP_SONGS, function(topSongs) {
                  // emit the top songs to users in the room
                  io.sockets.in(room).emit('vote topsongs', topSongs);
+                 console.log('\n\n************* songId, newSongAvg' + songid + ' ' +newSongAvg);
                  io.sockets.in(room).emit('vote update', songId, newSongAvg);
               });
            });
-        });
+        });   // end waitOn 
      });
   });
 
@@ -87,13 +92,13 @@ this.addUser = function(socket, room){
        console.log('\n\n************* queue waitOn');
         redis.waitOn([redis.getRoomPrevSongs, [room]], [redis.getRoomCurSong, [room]], [redis.getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
           for(var song in prevSongs){
-            socket.emit('song add prev', songQueue[song]);
+              socket.emit('song add', prevSongs[song],0,'prev');
           }
           if (curSong != '') {
-            socket.emit('song add cur', curSong);
+              socket.emit('song add', curSong, 0, 'cur');
           }
           for(var song in nextSongs) {  
-             socket.emit('song add next', songQueue[song]);
+              socket.emit('song add', nextSongs[song], 0, 'next');
           }    
        });
     });

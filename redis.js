@@ -15,7 +15,7 @@ this.initRedis = function() {
   redisClient.set('next.vote.id', 0);
   redisClient.set('next.queue.id', 0);
   redisClient.set('next.song.id', 0);
-  redisClient.set('empty.string.set', '');  // since sets can't be empty need to add an empty string to them, see NOTE in redis-template, or at the bottom of this file
+  redisClient.sadd('empty.set', '');  // since sets can't be empty need to add an empty string to them, see NOTE in redis-template, or at the bottom of this file
 }
 
 // callback should accept a single argument, the new id
@@ -37,10 +37,10 @@ this.isNameTaken = function (name, roomName, callback) {
 // if user name is already taken in the room, then we add digits to it to 
 // make it unique
 // if roomName == null, then we ignore that check entirely
-// return false if username was taken
+// return the user name that we ended up setting (can be different from what was
+//  requested if the name was taken)
 this.setUserName = function(userId, roomName, newName, callback) {
     console.log('\n************ changing user name');
-    var taken = false;
     // Get old user name
     redisClient.get('user:'+userId+':name', 
       function(err, oldName) {
@@ -51,7 +51,7 @@ this.setUserName = function(userId, roomName, newName, callback) {
            var notAdded = false;
            // Set username in the room if it doesn't exist
            // if it does exist, modify the name w/ numbers and then try again
-           while(notAdded) {
+           while(notAdded) { 
                redisClient.sadd(roomUsersSet, newName, function(err,reply){
                   // reply is the # of elements added to the set. is 0 if the name was already in there
 	           if(reply== 1) { 
@@ -59,7 +59,6 @@ this.setUserName = function(userId, roomName, newName, callback) {
                    }
                    else {
                       newName = namer.numberIt();
-                      taken = true;
                    }
 	       });
            }
@@ -67,7 +66,7 @@ this.setUserName = function(userId, roomName, newName, callback) {
         // if roomName != null it won't get here until after going through the while, right?
         // Set new name for user
         redisClient.set('user:'+userId+':name', newName, function(err,res) {
-           callback(taken);
+           callback(newName);
          });
 
       });
@@ -86,9 +85,10 @@ this.getUserName = function(userId, callback) {
 
 this.getUserRoom = function(userId, callback) {
     // return the name of the room that the user is in
-    redisClient.get('user:'+userId+':room', 
+    redisClient.get('user:'+userId+':room.name', 
       function(err,roomName) {
-          callback(name);
+          console.log('\n\n*********** user room:' + userId + ' ' + roomName);
+          callback(roomName);
       });
 }
 
@@ -132,11 +132,21 @@ this.getNumUsersInRoom = function(roomName, callback) {
     });
 }
 
+this.getUsersInRoom = function(roomName, callback) {
+  // should return a list of user ids and names, but for now
+  // just returns the user ids
+  self.getSet('room:'+roomName+':user.ids', function(users) {
+     console.log('\n\n*********** USERS IN ROOM : ' + users);
+     callback(users);
+  });
+}
+
 // Takes a song object, converts it to a string and adds it
 // to the database.  Returns the id of the song
 this.addSong = function(songObj, callback) {
     // Get a new id for the song and set it
-    self.getNewSongId(function(err, id) {
+    self.getNewSongId(function(id) {
+      console.log('\n\n************* newSongId: '+id);
       // Convert object to a string
       var songStr = JSON.stringify(songObj);
       // Add spotifyObject, votes and vote.total to the database as one unit
@@ -168,6 +178,7 @@ this.getNewSongId = function(callback) {
 this.getNewVoteId = function(callback) {
     // returns a new vote Id which can be used
     redisClient.incr('next.vote.id', function(err,newid) {
+         console.log('\n\n************* getNewVoteId' + newid);
          callback(newid);
     });   
 }
@@ -205,7 +216,7 @@ this.addRoom = function(roomName, callback) {
        .zadd('room:'+roomName+':next.songs',-1, '')
        .setnx('room:'+roomName+':cur.song', '')
        .exec(function(err,replies) {
-           // no return
+           // no return 
            callback();
        });
 }
@@ -214,10 +225,12 @@ this.addRoom = function(roomName, callback) {
 this.addUserToRoom = function(userId, roomName, callback) {
 
     function add(addRoomResult) {
+        self.doesRoomExist(roomName, function(val) {
+            console.log('\n\n********* DOES ROOM EXIST IN ADD ROOM: ' + val);          
+        });
        // set user's room id and add user's id to room
        console.log('\n\n************ addUserToRoom');
        self.waitOn([redisClient.set, ['user:'+userId+':room.name', roomName]],[redisClient.sadd, ['room:'+roomName+':user.ids', userId]], callback);
-
     }
 
     // see if room exists, if not create it.
@@ -253,13 +266,17 @@ this.getVoteId = function(userId, songId, callback) {
     // return the id of the vote associated with this user and song
     // get it by intersecting the user's vote list and song's vote list
     redisClient.sinter('song:'+songId+':votes', 'user:'+userId+':votes', function (err, res) {
-      if (res.length == 0) {
+      console.log('\n\n************* results from getVote! "' + res+'"');
+      if (res[0] == null){        // res is some object no matter what apparently. i.e. if the vote wasn't found, (res == null) -> false
+         console.log('\n\n************* vote not found! ');
         // return a new id if the vote is not found
-         self.getNewVoteId(function(err, newid) {
+         self.getNewVoteId(function(newid) {
+             console.log('\n\n************* new vote id!' + newid);
              callback(newid);
          });
       }
       else {
+        console.log('\n\n************* vote found! ' + res[0] + ' ' + typeof(res[0]));
         callback(res[0]);
       }
     });
@@ -299,14 +316,29 @@ this.updateVote = function(songId, voteId, newValue, callback) {
 // 
 // apparently you can't have an empty set, so when sets are init'd i add an empty string to them. 
 this.getSet = function(setKey, callback) {
-   redisClient.sdiff(setKey, 'empty.string.set', function(err, mems) {
-       callback(mems);
+   redisClient.sdiff(setKey, 'empty.set', function(err, mems) {
+       console.log('\n******** SET MEMBERS : '+mems);
+       if (mems == null) {
+           console.log('\n********* set is null');
+           callback([]);
+       }
+       else {
+          callback(mems);
+       }
    });
 }
 
 this.getSetSize = function(setKey, callback) {
-   redisClient.sdiff(setKey,'empty.string.set', function(err, res) {
-       callback(res.length);
+   redisClient.sdiff(setKey,'empty.set', function(err, res) {
+       console.log('\n********** setSize diff: ' + res);
+       if(res == null) {
+       console.log('\n********** setSize diff is null ');
+         callback(0);
+       }
+       else {
+       console.log('\n********** setSize diff is  '+res.length + ' long');
+         callback(res.length);
+       }
    });
 
 }
@@ -326,31 +358,38 @@ this.getSetSize = function(setKey, callback) {
 //  value to be redisClient, however this could break other fns.
 //  not sure how to use apply and *not* overwrite the 'this'
 this.waitOn = function() {
+  console.log('\n\n*********** waitOn called');
   var retVals = [];  // values returned from other redis calls
   var fnToIndex = {};    // maps the function called to the index it should have in retVals
-  var returnFn = arguments[arguments.length-1];
+  var returnFn = arguments[arguments.length-1];   // last argument is the fn to call when the waits are all done
   var valuesReturned = 0;       // keeps track of how many calls have been completed
 
   function complete() {
+      // console.log('\n\n*********** waitOn values returned: '+ valuesReturned + ' need: ' +retVals.length);
       if(valuesReturned == retVals.length) {
         returnFn.apply(this, retVals);
       }
   }
+
+   // I think the way this closure works is that i is what we want here.  I tested it out in a separate file at least.
+   function makeCallback(index) {
+     return function(redisVal) { //console.log('\n\n*********** callback index value ' + index); 
+       retVals[index] = redisVal; ++valuesReturned; complete(); };  
+   }
+
 
   for(var i=0; i<arguments.length-1; i++) {  // subtract 1 from arguments.length since last arg is the callback
      var redisFn = arguments[i][0];
      var redisFnArgs = arguments[i][1];
      retVals.push(true);  // push something into retVals so that it has the correct length
      fnToIndex[redisFn] = i;
-
-     var redisCallback = function(redisVal) { retVals[i] = redisVal; valuesReturned++; complete(); };  // I think the way this closure works is that i is what we want here.  I tested it out in a separate file at least.
+     // console.log('\n\n*********** waitOn retvals length: ' + retVals.length);
+     var redisCallback = makeCallback(i);
      redisFnArgs.push(redisCallback);    // add callback to the arguments for the redis call
-       console.log('\n\n************ redisFn ' + redisFn);
-       console.log('\n\n************ args: ' + redisFnArgs);
+       //console.log('\n\n************ redisFn ' + redisFn);
+       //console.log('\n\n************ args: ' + redisFnArgs);
      redisFn.apply(redisClient, redisFnArgs);   // call the redis function with the correct arguments including callback.  don't want to overwrite the this value of the function
   }
-
 }
-
 
 module.exports = this;

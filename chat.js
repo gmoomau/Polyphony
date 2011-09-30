@@ -36,8 +36,8 @@ this.beginChat = function(socket){
 
     cookieHelper.getUserId(socket, function(userId) {
        redis.waitOn([redis.getUserRoom, [userId]], [redis.getUserName, [userId]], function(room,oldName) {
-           redis.setUserName(userId,room,name, function(taken) {
-               if(taken) {
+           redis.setUserName(userId,room,name, function(setName) {
+               if(setName != name) {
                   socket.emit('chat message', 'system', 'Someone else is using that name.');
                }
 
@@ -98,15 +98,20 @@ this.getName = function(socket){
  console.log('\n************** end of chat get name ');
 }
 
-this.addUser = function(socket, room){
+this.addUser = function(socket, room, callback){
   cookieHelper.getUserId(socket, function(userId) {
-    redis.addUserToRoom(room,userId, function() {   // will create the room if needed
+    redis.addUserToRoom(userId, room, function() {   // will create the room if needed
+       redis.doesRoomExist(room, function(val) {
+           console.log('\n\n********* DOES ROOM EXIST IN CHATJS: ' + val);          
       // update users info for everyone in the room
-      redis.waitOn([redis.getNumUsersInRoom, [room]], [redis.getUserName, [userId]], function(roomUsers,userName) {
+      redis.waitOn([redis.getUsersInRoom, [room]], [redis.getUserName, [userId]], function(roomUsers,userName) {
+        console.log('\n********** add user waitOn results ', roomUsers, userName);
         socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
-       socket.emit('chat message', 'system', 'Now listening in: ' + room);
-       io.sockets.in(room).emit('chat users', roomUsers);;
-          });
+        socket.emit('chat message', 'system', 'Now listening in: ' + room);
+        io.sockets.in(room).emit('chat users', roomUsers);;
+        callback();
+      });
+     });
     });
   });
 

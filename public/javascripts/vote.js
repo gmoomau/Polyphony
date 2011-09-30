@@ -39,6 +39,7 @@ function setVoteWidth() {
 
 function initVotes(socket) {
     socket.on('vote update', function(songId, avg) {
+       alert(songId +' ' + avg);
        setColorAndWidth(songId, avg, true);
     });
 

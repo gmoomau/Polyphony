@@ -128,34 +128,34 @@ socket.on('song change', function(songURI, mins, secs){
       nowPlaying.addClass("currentlyPlaying");
 });
 
-socket.on('song add', function(songInfo){
+socket.on('song add', function(songInfo, songId, songStatus){
       var trackStatus = 'comingUp';
-      if (songInfo.status == 'prev') {
+      if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';
       }
-      else if (songInfo.status == 'cur') {
+      else if (songStatus == 'cur') {
          trackStatus = 'currentlyPlaying';
       }
       var songArtist = getSongArtist(songInfo);
       var songName = getSongName(songInfo);
 
       var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
-      trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
-      trackStr += "<input id='"+songInfo.id+"_voteValue' type='hidden' value='50' />";
-      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp; </div></div>"; // also closes the voteOuter
+      trackStr += "<div class='voteOuter' id='"+songId+"_voteOuter'>";
+      trackStr += "<input id='"+songId+"_voteValue' type='hidden' value='50' />";
+      trackStr += "<div class='voteInner' id='"+songId+"_voteInner'>&nbsp; </div></div>"; // also closes the voteOuter
 
       trackStr += "<div class='voteOuterAvg'>"; // doesn't need an id
-      trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteAvg'>&nbsp;</div></div>";  // also closes the voteOuter
-      trackStr += "<span class='voteSet' id='"+songInfo.id+"_voteSet'>Set!</span>"; 
+      trackStr += "<div class='voteInner' id='"+songId+"_voteAvg'>&nbsp;</div></div>";  // also closes the voteOuter
+      trackStr += "<span class='voteSet' id='"+songId+"_voteSet'>Set!</span>"; 
       trackStr += "</div><p />";  // also closes the track div and voteOuter
 
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
-      $("#"+songInfo.id+"_voteSet").hide();
-      $("#"+songInfo.id+"_voteOuter").mousemove(slideVote);
-      $("#"+songInfo.id+"_voteOuter").mouseleave(setVoteWidth);
-      $("#"+songInfo.id+"_voteOuter").click(setVote);
-      $("#"+songInfo.id+"_voteOuter").click();
-      setColorAndWidth(songInfo.id, 50, false);
+      $("#"+songId+"_voteSet").hide();
+      $("#"+songId+"_voteOuter").mousemove(slideVote);
+      $("#"+songId+"_voteOuter").mouseleave(setVoteWidth);
+      $("#"+songId+"_voteOuter").click(setVote);
+      $("#"+songId+"_voteOuter").click();
+      setColorAndWidth(songId, 50, false);
     });
 
    $("#playItOff").click(function(e){

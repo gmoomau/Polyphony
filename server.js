@@ -129,8 +129,9 @@ io.sockets.on('connection', function(socket){
   socket.on('join room', function(room) {
     console.log('\n******** joining a room');
     socket.join(room);           // put socket in socketroom
-    chat.addUser(socket, room);  
-    queue.addUser(socket, room);
+    chat.addUser(socket, room, function() {
+       queue.addUser(socket, room);
+    });  // serialized chat and queue b/c o/w both might end up making a room
     
     console.log('JOINED '+room);
     socket.set('room', room);    // set the room var so we can join in later
