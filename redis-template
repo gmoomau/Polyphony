@@ -42,6 +42,7 @@ II. Proposed methods
    B. votes
      i. vote:id:song.id         --> int song id
      ii. vote:id:value          --> int value \in 0-100
+     iii. vote:id:room.id       --> string room name
 
    C. users
      i. user:id:name            --> string
@@ -50,7 +51,6 @@ II. Proposed methods
 
    D. rooms
      i. room:name:user.ids      --> set of user ids
-     ii. room:name:queue.id     --> int queue id
      iii. room:name:user.names  --> set of user names in this room
    
      // Got rid of queue structure since it seemed like an unnecssary step to
@@ -66,3 +66,7 @@ II. Proposed methods
      i. song:id:spotify.obj     --> stringified version of json object
      ii. song:id:votes          --> set of vote ids
      iii. song:id:vote.total    --> int value, sum of all votes
+
+
+// NOTE: apparently you can't have an empty set, so when sets are init'd i add an empty string to them.  anything that returns a set that was initialized as empty should instead return sdiff(thatSet, 'empty.string.set'). Sim for cardinality of sets
+// use getSet and getSetSize to wrap around this stuff

@@ -74,8 +74,7 @@ this.addUser = function(socket, room){
     // addRoom will return false if the room already exists
     // otherwise it will initialize all the queue stuff for us
   cookieHelper.getUserId(socket, function(userId) {
-    redis.addUserToRoom(userId, room, function(roomExists) {
-      if(roomExists) {
+    redis.addUserToRoom(userId, room, function() {
        // start song playback
        redis.getRoomCurSong(room, function(curSong) {
          if (curSong != '') {
@@ -97,8 +96,6 @@ this.addUser = function(socket, room){
              socket.emit('song add next', songQueue[song]);
           }    
        });
-
-      }  // end if room exits
     });
  });  // end cookieHelper
 }

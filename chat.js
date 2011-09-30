@@ -100,12 +100,13 @@ this.getName = function(socket){
 
 this.addUser = function(socket, room){
   cookieHelper.getUserId(socket, function(userId) {
-    redis.addUserToRoom(room,userId, function(unused) {   // will create the room if needed
+    redis.addUserToRoom(room,userId, function() {   // will create the room if needed
       // update users info for everyone in the room
-      redis.waitOn([redis.getUsersInRoom, [room]], [redis.getUserName, [userId]], function(roomUsers,userName) {
+      redis.waitOn([redis.getNumUsersInRoom, [room]], [redis.getUserName, [userId]], function(roomUsers,userName) {
         socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
        socket.emit('chat message', 'system', 'Now listening in: ' + room);
-      });
+       io.sockets.in(room).emit('chat users', roomUsers);;
+          });
     });
   });
 
@@ -114,7 +115,7 @@ this.addUser = function(socket, room){
 this.disconnect = function(socket, room){
   cookieHelper.getUserId(socket, function(userId) {
      redis.waitOn([redis.getUserName,[userId]], [redis.removeUserFroomRoom, [userId, room]], function(name,unused) {
-       redis.getUsersInRoom(room, function(roomUsers) {
+       redis.getNumUsersInRoom(room, function(roomUsers) {
            io.sockets.in(room).emit('chat users', roomUsers);;
            io.sockets.in(room).emit('chat message', 'system', name+' left');
         });
