@@ -136,7 +136,7 @@ this.getNumUsersInRoom = function(roomName, callback) {
 // to the database.  Returns the id of the song
 this.addSong = function(songObj, callback) {
     // Get a new id for the song and set it
-    redisClient.getNewSongId(function(err, id) {
+    self.getNewSongId(function(err, id) {
       // Convert object to a string
       var songStr = JSON.stringify(songObj);
       // Add spotifyObject, votes and vote.total to the database as one unit
@@ -255,7 +255,7 @@ this.getVoteId = function(userId, songId, callback) {
     redisClient.sinter('song:'+songId+':votes', 'user:'+userId+':votes', function (err, res) {
       if (res.length == 0) {
         // return a new id if the vote is not found
-         redisClient.getNewVoteId(function(err, newid) {
+         self.getNewVoteId(function(err, newid) {
              callback(newid);
          });
       }
@@ -320,7 +320,11 @@ this.getSetSize = function(setKey, callback) {
 //   eg: redis.waitOn([redis.getUserName, [3]], [redis.getNewSongId, []], returnFn)
 //       returnFn will be called as: returnFn(song3sAvg, newSongId);
 // should be used anytime there are multiple calls that are needed, but don't rely on each
-// other.  not necessarily just getter functions or even redis calls, can be anything async
+// other.  not necessarily just getter functions 
+// CURRENTLY HAVE AN ISSUE IF THE FUNCTION NEEDS TO USE 'this'
+//  To make this stuff work with the redis calls I always set the 'this'
+//  value to be redisClient, however this could break other fns.
+//  not sure how to use apply and *not* overwrite the 'this'
 this.waitOn = function() {
   var retVals = [];  // values returned from other redis calls
   var fnToIndex = {};    // maps the function called to the index it should have in retVals
@@ -343,7 +347,7 @@ this.waitOn = function() {
      redisFnArgs.push(redisCallback);    // add callback to the arguments for the redis call
        console.log('\n\n************ redisFn ' + redisFn);
        console.log('\n\n************ args: ' + redisFnArgs);
-     redisFn.apply(this, redisFnArgs);   // call the redis function with the correct arguments including callback
+     redisFn.apply(redisClient, redisFnArgs);   // call the redis function with the correct arguments including callback.  don't want to overwrite the this value of the function
   }
 
 }
