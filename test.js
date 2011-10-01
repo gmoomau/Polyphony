@@ -16,7 +16,7 @@ redisClient.sdiff('foo', setName, function(err, val) {
         console.log('');
     });
 
-redisClient.zrange('bar',0,4, function(err, res) {
+redisClient.zrange('bar',0,0, function(err, res) {
         console.log(res);
     });
 

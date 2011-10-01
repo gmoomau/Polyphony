@@ -129,6 +129,12 @@ function playNextSong(room) {
         songTimeout[room] = setTimeout(function(){
            playNextSong(room);
         }, curSong.length*1000);
+        // find the new top songs now that a song is off the next song list
+        redis.getTopSongs(room, NUM_TOP_SONGS, function(topSongs) {
+            // emit the top songs to users in the room
+            io.sockets.in(room).emit('vote topsongs', topSongs);
+        });
+
      }
      else {
         // No current song to play, get rid of currentlyPlaying on client?
