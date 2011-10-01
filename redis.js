@@ -275,7 +275,12 @@ this.getVoteId = function(userId, songId, callback) {
         // return a new id if the vote is not found
          self.getNewVoteId(function(newid) {
              console.log('\n\n************* new vote id!' + newid);
-             callback(newid);
+             // Add the new song id to the user's and song's vote set
+             self.waitOn([redisClient.sadd, ['song:'+songId+':votes', newid]],
+                         [redisClient.sadd, ['user:'+userId+':votes', newid]],
+                         function() {
+                           callback(newid);
+                         });
          });
       }
       else {
@@ -294,13 +299,13 @@ this.updateVote = function(songId, voteId, newValue, callback) {
        var diff = newValue - value;  // diff for the song's vote total
        // updates a votes value, and add diff to the song's vote total
        redisClient.multi()
-            .incr('song:'+songId+':votes.total', diff)
+            .incrby('song:'+songId+':votes.total', diff)
             .scard('song:'+songId+':votes')
             .get('vote:'+voteId+':room.name')
             .get('song:'+songId+':spotify.obj')
             .exec(function(err, replies) { 
               var voteTotal = replies[0];
-              var voteCount = replies[1];
+              var voteCount = replies[1] - 1 ;  // sub 1 for the empty string
               var roomName = replies[2];
               var songStr = replies[3];
               redisClient.set('vote:'+voteId+':value',newValue);
@@ -352,7 +357,7 @@ this.getSetSize = function(setKey, callback) {
 // arg1...argN-1 look like [redisFnToCall, redisArgs] note that redisArgs must be an array
 //   so that we can push the appropriate callback into it
 // when they've completed, callback will be called with the return values in order
-//   eg: redis.waitOn([redis.getUserName, [3]], [redis.getNewSongId, []], returnFn)
+//   eg: redisClient.waitOn([redisClient.getUserName, [3]], [redisClient.getNewSongId, []], returnFn)
 //       returnFn will be called as: returnFn(song3sAvg, newSongId);
 // should be used anytime there are multiple calls that are needed, but don't rely on each
 // other.  not necessarily just getter functions 

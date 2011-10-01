@@ -66,7 +66,7 @@ this.prepareQueue = function(socket) {
               redis.getTopSongs(room, NUM_TOP_SONGS, function(topSongs) {
                  // emit the top songs to users in the room
                  io.sockets.in(room).emit('vote topsongs', topSongs);
-                 console.log('\n\n************* songId, newSongAvg' + songid + ' ' +newSongAvg);
+                 console.log('\n\n************* songId, newSongAvg' + songId + ' ' +newSongAvg);
                  io.sockets.in(room).emit('vote update', songId, newSongAvg);
               });
            });
