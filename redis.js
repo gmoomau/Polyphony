@@ -199,6 +199,12 @@ this.getTopSongs = function(roomName, numSongs, callback) {
 }
 
 
+this.getUserVotes = function(userId, callback) {
+   self.getSet('user:'+userId+':votes', function(members) {
+       callback(members);
+   });
+}
+
 this.removeVote = function(voteId, callback) {
     redisClient.get('vote:'+voteId+':song.id', function(err, songId) {
       // set the song's vote total and update the vote
