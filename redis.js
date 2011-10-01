@@ -192,7 +192,7 @@ this.getTopSongs = function(roomName, numSongs, callback) {
     // Get the top numSongs number of song objs from the room's next queue
     // and return it
     console.log('\n\n*********** TOP SONGS ROOM: '+roomName);
-    redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1, function(err,results) {
+    redisClient.zrevrange('room:'+roomName+':next.songs', 0,numSongs-1, function(err,results) {
        console.log('\n\n******** TOP SONG RESULTS: ' + err + ' ' + ' ' + results);
        callback(results);
     });
@@ -368,6 +368,32 @@ this.getSetSize = function(setKey, callback) {
 
 }
 
+this.changeSongs = function(roomName, callback) {
+   // Get first thing from next songs,
+   redisClient.zrange('room:'+roomName+':next.songs', -1, -1, function(err, highestSong) {
+     // parse the nextSongStr into a JSON object so we can add a .startTime
+     var songObj = JSON.parse(highestSong);
+     songObj.startTime = (new Date()).getTime();
+     var songStr = JSON.stringify(songObj);
+     redisClient.get('room:'+roomName+':cur.song', function(err, cursong) {
+        if(cursong != '') {      // Push cursong onto prev songs and LTRIM that list
+            redisClient.lpush('room:'+roomName+':prev.songs', cursong, function(err, res) {
+              redisClient.ltrim('room:'+roomName+':prev.songs', 0,2);
+           });
+        }
+         
+        // set highestSong to be the rooms current song, and remove it from the next songs list
+        redisClient.set('room:'+roomName+':cur.song', songStr);
+
+        redisClient.zrem('room:'+roomName+':next.songs', highestSong);
+       // return the stringified version of the JSON object
+       callback(songStr);        
+     });     
+
+
+
+   });
+}
 
 // this function takes any number of arguments arg1, arg2,..., argN, but expects:
 // argN is a callback function to be called when all redis calls have returned

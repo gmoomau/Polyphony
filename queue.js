@@ -46,7 +46,7 @@ this.prepareQueue = function(socket) {
          if(songTimeout[room] != null){
            clearTimeout(songTimeout[room]);
          }
-         redis.changeSongs(room, function(){}); 
+         playNextSong(room);
        });
     });
   });
@@ -120,5 +120,22 @@ this.disconnect = function(socket, room){
    });
 }
 
+function playNextSong(room) {
+   redis.changeSongs(room, function(curSongStr){
+     if (curSongStr != '') {
+        curSong = JSON.parse(curSongStr);
+        io.sockets.in(room).emit('song change', curSong.href, 0,0);
+        // set timeout to call changeSongs again after appropriate timeout
+        songTimeout[room] = setTimeout(function(){
+           playNextSong(room);
+        }, curSong.length*1000);
+     }
+     else {
+        // No current song to play, get rid of currentlyPlaying on client?
+        // Go to a state where we immediately start playing the next song to be added?
+     }
+   }); 
+
+}
 
 module.exports = this;
