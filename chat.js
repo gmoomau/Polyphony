@@ -108,7 +108,7 @@ this.addUser = function(socket, room, callback){
         console.log('\n********** add user waitOn results ', roomUsers, userName);
         socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
         socket.emit('chat message', 'system', 'Now listening in: ' + room);
-        io.sockets.in(room).emit('chat users', roomUsers);;
+        io.sockets.in(room).emit('chat users', roomUsers);
         callback();
       });
      });
@@ -120,7 +120,7 @@ this.addUser = function(socket, room, callback){
 this.disconnect = function(socket, room){
   cookieHelper.getUserId(socket, function(userId) {
      redis.waitOn([redis.getUserName,[userId]], [redis.removeUserFromRoom, [userId, room]], function(name,unused) {
-       redis.getNumUsersInRoom(room, function(roomUsers) {
+       redis.getUsersInRoom(room, function(roomUsers) {
            io.sockets.in(room).emit('chat users', roomUsers);
            io.sockets.in(room).emit('chat message', 'system', name+' left');
         });

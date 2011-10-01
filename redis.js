@@ -125,13 +125,6 @@ this.doesRoomExist = function(roomName, callback) {
 }
 
 
-this.getNumUsersInRoom = function(roomName, callback) {
-    // returns the number of users in a room
-    self.getSetSize('room:'+roomName+':user.ids', function(size) {
-      callback(size);
-    });
-}
-
 this.getUsersInRoom = function(roomName, callback) {
   // should return a list of user ids and names, but for now
   // just returns the user ids
