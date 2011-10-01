@@ -97,6 +97,8 @@ this.getRoomNextSongs = function(roomName, callback) {
     redisClient.zrange('room:'+roomName+':next.songs', 0,-1,
       function(err, nextSongs) {
            // might need to remove the empty string
+           var index = nextSongs.indexOf('');
+           nextSongs.splice(index,1);
            callback(nextSongs);
       });
 }
@@ -251,6 +253,7 @@ this.addUserToRoom = function(userId, roomName, callback) {
 this.removeUserFromRoom = function(userId, roomName, callback) {
     // remove roomName from user's room id
     // remove username and user id from room
+    console.log('\n\n*********** removing user from room');
     self.getUserName(userId, function(name) {
        self.waitOn([redisClient.srem,['room:'+roomName+':user.ids', userId]],
               [redisClient.srem,['room:'+roomName+':user.names', name]],

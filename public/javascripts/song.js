@@ -129,6 +129,7 @@ socket.on('song change', function(songURI, mins, secs){
 });
 
 socket.on('song add', function(songInfo, songId, songStatus){
+      alert('"'+songInfo + '" ' + songId + ' ' + songStatus);
       var trackStatus = 'comingUp';
       if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';

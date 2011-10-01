@@ -29,8 +29,9 @@ this.prepareQueue = function(socket) {
           var songObject = JSON.parse(songInfo).track;
           redis.addSong(songObject, function(songId) {
              redis.addSongToRoom(songId,room, function(){  // wait until song is added to alert users (in case something bad happens/so they can't vote)
-                     console.log('\n\n*********** songid: ' + songId);
+                     console.log('\n\n*********** songid: ' + songId + ' ' + songObject.name);
                      io.sockets.in(room).emit('song add', songObject, songId, 'next');
+                     console.log('\n\n*********** '+io.sockets.in(room));
              });   
           });
         }
@@ -92,12 +93,15 @@ this.addUser = function(socket, room){
        console.log('\n\n************* queue waitOn');
         redis.waitOn([redis.getRoomPrevSongs, [room]], [redis.getRoomCurSong, [room]], [redis.getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
           for(var song in prevSongs){
+              console.log('\n\n******** sending prev queue');
               socket.emit('song add', prevSongs[song],0,'prev');
           }
           if (curSong != '') {
+              console.log('\n\n******** sending cur queue');
               socket.emit('song add', curSong, 0, 'cur');
           }
-          for(var song in nextSongs) {  
+          for(var song in nextSongs) {
+              console.log('\n\n******** sending next queue');
               socket.emit('song add', nextSongs[song], 0, 'next');
           }    
        });
