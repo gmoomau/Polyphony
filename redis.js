@@ -94,12 +94,10 @@ this.getUserRoom = function(userId, callback) {
 
 this.getRoomNextSongs = function(roomName, callback) {
     // get the songs from the next up queue 
-    redisClient.zrange('room:'+roomName+':next.songs', 0,-1,
+    redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1,
       function(err, nextSongs) {
-           // might need to remove the empty string
-           var index = nextSongs.indexOf('');
-           nextSongs.splice(index,1);
-           callback(nextSongs);
+          if (nextSongs == null) { callback([]);}
+          else{        callback(nextSongs); }
       });
 }
 
@@ -162,9 +160,13 @@ this.addSong = function(songObj, callback) {
     });
 }
 
-this.addSongToRoom = function(songId, roomName, callback) {
+this.addSongToRoom = function(songObject, roomName, callback) {
+    var songStr = JSON.stringify(songObject);
     // add song to the room's next.songs sorted set with a value of 0
-    redisClient.zadd('room:'+roomName+':next.songs', 0, songId, function(err,res) {
+    redisClient.zadd('room:'+roomName+':next.songs', 0, songStr, function(err,res) {
+       redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1, function(err,res) {
+            console.log('\n********** nextsongs after addSongToRoom' + res);});
+
        callback();
     });
 }
@@ -189,7 +191,9 @@ this.getNewVoteId = function(callback) {
 this.getTopSongs = function(roomName, numSongs, callback) {
     // Get the top numSongs number of song objs from the room's next queue
     // and return it
-    redisClient.zrange('room:'+roomName+':next.songs',0,2, function(err, results) {
+    console.log('\n\n*********** TOP SONGS ROOM: '+roomName);
+    redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1, function(err,results) {
+       console.log('\n\n******** TOP SONG RESULTS: ' + err + ' ' + ' ' + results);
        callback(results);
     });
 }
@@ -215,7 +219,6 @@ this.addRoom = function(roomName, callback) {
     redisClient.multi()
        .sadd('room:'+roomName+':user.ids', '')
        .sadd('room:'+roomName+':user.names','')
-       .zadd('room:'+roomName+':next.songs',-1, '')
        .setnx('room:'+roomName+':cur.song', '')
        .exec(function(err,replies) {
            // no return 
@@ -278,8 +281,15 @@ this.getVoteId = function(userId, songId, callback) {
              // Add the new song id to the user's and song's vote set
              self.waitOn([redisClient.sadd, ['song:'+songId+':votes', newid]],
                          [redisClient.sadd, ['user:'+userId+':votes', newid]],
-                         function() {
-                           callback(newid);
+                         [self.getUserRoom, [userId]],
+                         function(add1,add2, roomName) { 
+                         // also need to initialize the vote object
+                           self.waitOn([redisClient.set, ['vote:'+newid+':song.id', songId]],
+                                       [redisClient.set, ['vote:'+newid+':value', 0]],
+                                       [redisClient.set, ['vote:'+newid+':room.name', roomName]],
+                           function() {
+                              callback(newid);
+                           });
                          });
          });
       }
@@ -303,17 +313,24 @@ this.updateVote = function(songId, voteId, newValue, callback) {
             .scard('song:'+songId+':votes')
             .get('vote:'+voteId+':room.name')
             .get('song:'+songId+':spotify.obj')
+            .set('vote:'+voteId+':value',newValue)
             .exec(function(err, replies) { 
               var voteTotal = replies[0];
               var voteCount = replies[1] - 1 ;  // sub 1 for the empty string
               var roomName = replies[2];
               var songStr = replies[3];
-              redisClient.set('vote:'+voteId+':value',newValue);
               // set value of song in sorted set  
-             redisClient.zadd('room:'+roomName+':next.songs', voteTotal, songStr);
-               // returns the new score of the song / number of users
-              callback(voteTotal / voteCount);
-              });
+             console.log('\n******** UPDATE VOTE ROOM NAME ' + roomName);
+             redisClient.zadd('room:'+roomName+':next.songs', voteTotal, songStr, function(err,res) {
+                 redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1, function(err2,res2) {
+                    if(err || err2) { console.log('\n\n************* ERROR ERROR ERROR in update Vote ****************');}
+                    console.log('\n********** nextsongs after update vote ' + res2);
+                    console.log('\n********** NEW VOTE TOTAL ' + voteTotal+'\n******'+songStr);
+                 })
+                    // returns the new score of the song / number of users
+                 callback(voteTotal / voteCount);
+               });
+           });
     });
 
 }

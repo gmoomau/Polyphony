@@ -28,7 +28,7 @@ this.prepareQueue = function(socket) {
         else{
           var songObject = JSON.parse(songInfo).track;
           redis.addSong(songObject, function(songId) {
-             redis.addSongToRoom(songId,room, function(){  // wait until song is added to alert users (in case something bad happens/so they can't vote)
+             redis.addSongToRoom(songObject,room, function(){  // wait until song is added to alert users (in case something bad happens/so they can't vote)
                      console.log('\n\n*********** songid: ' + songId + ' ' + songObject.name);
                      io.sockets.in(room).emit('song add', songObject, songId, 'next');
                      console.log('\n\n*********** '+io.sockets.in(room));
@@ -64,6 +64,7 @@ this.prepareQueue = function(socket) {
               console.log('\n\n************* updated vote!' + songId + ' ' +vote);
               // find the new top songs now that the song's score has changed
               redis.getTopSongs(room, NUM_TOP_SONGS, function(topSongs) {
+                 console.log('\n\n************* top songs being emitted: ' + topSongs);
                  // emit the top songs to users in the room
                  io.sockets.in(room).emit('vote topsongs', topSongs);
                  console.log('\n\n************* songId, newSongAvg' + songId + ' ' +newSongAvg);
