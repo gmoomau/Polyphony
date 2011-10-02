@@ -130,6 +130,7 @@ function initSongs(socket) {
 });
 
 socket.on('song add', function(songInfo, songId, songStatus){
+
       var trackStatus = 'comingUp';
       if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';

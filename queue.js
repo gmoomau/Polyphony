@@ -82,11 +82,15 @@ this.addUser = function(socket, room){
   cookieHelper.getUserId(socket, function(userId) {
     redis.addUserToRoom(userId, room, function(err) {
        // start song playback
-            redis.getRoomCurSong(room, function(err,curSong) {
-         if (curSong != '') {
-            curSong = JSON.parse(curSong);
-            var diff = (new Date()).getTime() - curSong.startTime;
-            socket.emit('song change', curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
+        redis.getRoomCurSong(room, function(err,curSongs) {
+         var curSong = curSongs[0];
+         if (curSong != null) {
+             console.log('\n\n********** cur song: ' + curSong);
+            curSong = JSON.parse(curSong.songObj);
+            redis.getRoomCurStart (room, function(err, startTime) {
+              var diff = (new Date()).getTime() - startTime;
+              socket.emit('song change', curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
+            });
          }
        });
       // send current song queue to user.  probably a better way to do this?
@@ -94,15 +98,15 @@ this.addUser = function(socket, room){
             redis.waitOn([redis.getRoomPrevSongs, [room]], [redis.getRoomCurSong, [room]], [redis.getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
           for(var song in prevSongs){
               console.log('\n\n******** sending prev queue');
-              socket.emit('song add', prevSongs[song],0,'prev');
+              socket.emit('song add', JSON.parse(prevSongs[song].songObj), prevSongs[song].songId, 'prev');
           }
-          if (curSong != '') {
+          for (var song in curSong) {
               console.log('\n\n******** sending cur queue');
-              socket.emit('song add', curSong, 0, 'cur');
+              socket.emit('song add', JSON.parse(curSong[song].songObj), curSong[song].songId, 'cur');
           }
           for(var song in nextSongs) {
-              console.log('\n\n******** sending next queue');
-              socket.emit('song add', nextSongs[song], 0, 'next');
+              console.log('\n\n*********** next queue: ' + nextSongs[song].songId + ' ' + nextSongs[song].songObj);
+              socket.emit('song add', JSON.parse(nextSongs[song].songObj), nextSongs[song].songId, 'next');
           }    
        });
     });

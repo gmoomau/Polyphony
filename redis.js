@@ -92,26 +92,70 @@ this.getUserRoom = function(userId, callback) {
       });
 }
 
+
+this.getSongObjsFromIds = function(songIdArray, callback) {
+  // takes an array of song ids and returns an array of
+  // songIds / songObjs with attributes
+  var functions = [];
+  for(var idx=0; idx < songIdArray.length; idx++){
+      functions.push([redisClient.get, ['song:'+songIdArray[idx]+':spotify.obj']]); //functions[idx] = [redisClient.get, ['song:'+songIdArray[idx]+':spotify.obj']];
+      console.log('\n\n********** top songs converting list: ' + functions[idx]);
+  }
+
+  function returnFn() {
+      // function called when all the song ids have been turned into spotify objects
+          var songIdObjArray = [];
+          for(var i=0; i< arguments.length; i++) {
+             console.log('\n\n********** top songs results:' + arguments[i] + ' ' + i + ' of ' + arguments.length);
+             songIdObjArray[i] = new Object();
+             songIdObjArray[i].songObj = arguments[i];
+             songIdObjArray[i].songId = songIdArray[i];
+          }
+          callback(null,songIdObjArray);
+   }
+ 
+  functions.push(returnFn);//[idx] = returnFn;
+       
+  self.waitOn.apply(self,functions);
+}
+// Next three functions return songObj, songIds by returning arrays of objects with
+// .songId and .songObj attributes
 this.getRoomNextSongs = function(roomName, callback) {
     // get the songs from the next up queue 
     redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1,
       function(err, nextSongs) {
-          if (nextSongs == null) { callback(err,[]);}
-          else{        callback(err,nextSongs); }
+          if (nextSongs == '') { callback(err,[]);}
+          else{
+            self.getSongObjsFromIds(nextSongs, callback);
+          }
       });
 }
 
 this.getRoomCurSong = function(roomName, callback) {
     redisClient.get('room:'+roomName+':cur.song',
       function(err, curSong) {
-          callback(err,curSong);
+          if (curSong == '') { callback(err,[]);}
+          else{
+            console.log('\n\n******** room cur song' + curSong);
+            self.getSongObjsFromIds([curSong], callback);
+          }
+      });
+}
+
+this.getRoomCurStart = function(roomName, callback) {
+    redisClient.get('room:'+roomName+':song.start',
+      function(err, songStart) {
+          callback(err,songStart);
       });
 }
 
 this.getRoomPrevSongs = function(roomName, callback) {
     redisClient.lrange('room:'+roomName+':prev.songs',0,-1,
       function(err, prevSongs) {
-          callback(err,prevSongs);
+          if (prevSongs == '') { callback(err,[]);}
+          else{
+            self.getSongObjsFromIds(prevSongs, callback);
+          }
       });
 }
 
@@ -393,10 +437,6 @@ this.changeSongs = function(roomName, callback) {
    redisClient.zrange('room:'+roomName+':next.songs', -1, -1, function(err, highestSongId) {
      if (highestSongId != null) {
        redisClient.get('song:'+highestSongId+':spotify.obj', function(err, highestSong) {
-         // parse the nextSongStr into a JSON object so we can add a .startTime
-         var songObj = JSON.parse(highestSong);
-         songObj.startTime = (new Date()).getTime();
-         var songStr = JSON.stringify(songObj);
          redisClient.get('room:'+roomName+':cur.song', function(err, cursong) {
            if(cursong != '') {      // Push cursong onto prev songs and LTRIM that list
                 redisClient.lpush('room:'+roomName+':prev.songs', cursong, function(err, res) {
@@ -404,14 +444,16 @@ this.changeSongs = function(roomName, callback) {
                });
             }
          
-            // set highestSong to be the rooms current song, and remove it from the next songs list
-            redisClient.set('room:'+roomName+':cur.song', songStr);
+            // set current song in the room
+            redisClient.set('room:'+roomName+':song.start', (new Date()).getTime());
+            redisClient.set('room:'+roomName+':cur.song', highestSongId);
 
+            // remove song from the next songs list
             redisClient.zrem('room:'+roomName+':next.songs', highestSongId);
            // return the stringified version of the JSON object
-           callback(err,highestSongId,songStr);       
+           callback(err,highestSongId,highestSong);       
          });     
-     });
+      });
      }
      else { // no next song
          callback(err,null,null);
@@ -446,8 +488,8 @@ this.waitOn = function() {
   var valuesReturned = 0;       // keeps track of how many calls have been completed
 
   function complete() {
-      console.log('\n\n*********** waitOn values returned: '+ valuesReturned + ' need: ' +retVals.length);
-      console.log('\n\n*********** waitOn values: ' + retVals);
+      // console.log('\n\n*********** waitOn values returned: '+ valuesReturned + ' need: ' +retVals.length);
+      // console.log('\n\n*********** waitOn values: ' + retVals);
       if(valuesReturned == retVals.length) {
         returnFn.apply(this, retVals);
       }
@@ -455,7 +497,7 @@ this.waitOn = function() {
 
    // I think the way this closure works is that i is what we want here.  I tested it out in a separate file at least.
    function makeCallback(index) {
-     return function(err,redisVal) { console.log('\n\n*********** callback index value ' + index); 
+     return function(err,redisVal) { // console.log('\n\n*********** callback index value ' + index); 
        retVals[index] = redisVal; ++valuesReturned; complete(); };  
    }
 
@@ -465,11 +507,11 @@ this.waitOn = function() {
      var redisFnArgs = arguments[i][1];
      retVals.push(true);  // push something into retVals so that it has the correct length
      fnToIndex[redisFn] = i;
-     console.log('\n\n*********** waitOn retvals length: ' + retVals.length);
+     // console.log('\n\n*********** waitOn retvals length: ' + retVals.length);
      var redisCallback = makeCallback(i);
      redisFnArgs.push(redisCallback);    // add callback to the arguments for the redis call
-     console.log('\n\n************ redisFn ' + redisFn);
-     console.log('\n\n************ args: ' + redisFnArgs);
+     // console.log('\n\n************ redisFn ' + redisFn);
+     // console.log('\n\n************ args: ' + redisFnArgs);
      redisFn.apply(redisClient, redisFnArgs);   // call the redis function with the correct arguments including callback.  don't want to overwrite the this value of the function
   }
 }
