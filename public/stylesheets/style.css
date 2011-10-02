@@ -117,6 +117,7 @@ input {
 .alreadyPlayed {
   color: #808080;
   clear: both;
+  text-decoration: line-through;
 }
 
 .currentlyPlaying {

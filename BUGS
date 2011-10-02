@@ -8,6 +8,6 @@
 
 - voteOuters don't go away when a song is deleted (aren't part of removed div)
 
-- songs are played in sorted order, BUT displayed as playing in queue order
-
 - sorted order will include previously played songs
+
+- doesn't remove a user from a room if they change rooms

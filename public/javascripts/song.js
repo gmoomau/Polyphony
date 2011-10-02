@@ -2,6 +2,7 @@
 
 
 var searchResults = [];  // an array storing all search results
+var prevSongPlayed = -1;  // the ID of the previously played song
 
 function queueSong(text) {
     $("#uri").val(text);
@@ -108,7 +109,7 @@ function processResults (spotifyResults) {
 
 function initSongs(socket) {
 // songStart is either 0, or the time when the song started playing in the room in millis
-socket.on('song change', function(songURI, mins, secs){
+   socket.on('song change', function(songId, songURI, mins, secs){
 
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
 
@@ -123,7 +124,7 @@ socket.on('song change', function(songURI, mins, secs){
       }
 
       // mark current song as playing
-      var nowPlaying = $(".comingUp").filter(":first");
+      var nowPlaying = $("#"+songId+"_songDiv");
       nowPlaying.removeClass("comingUp");
       nowPlaying.addClass("currentlyPlaying");
 });
@@ -139,7 +140,7 @@ socket.on('song add', function(songInfo, songId, songStatus){
       var songArtist = getSongArtist(songInfo);
       var songName = getSongName(songInfo);
 
-      var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
+      var trackStr = "<div id='"+songId+"_songDiv' class='"+trackStatus+"'>"+songArtist +" - "+ songName +'';
       trackStr += "<div class='voteOuter' id='"+songId+"_voteOuter'>";
       trackStr += "<input id='"+songId+"_voteValue' type='hidden' value='50' />";
       trackStr += "<div class='voteInner' id='"+songId+"_voteInner'>&nbsp; </div></div>"; // also closes the voteOuter

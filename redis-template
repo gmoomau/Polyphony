@@ -58,7 +58,7 @@ II. Proposed methods
      // Also changed idea from storing song ids to stringified song objects
      //   since that's what we'd prefer to access since we pull stuff out of the
      //   queues and send it to the client
-     iv. room:name:next.songs   --> sorted set of song objs based on songvotes
+     iv. room:name:next.songs   --> sorted set of song ids based on songvotes
      v. room:name:prev.songs    --> list of song objs previously played songs
      vi. room:name:cur.song     --> single song obj
 

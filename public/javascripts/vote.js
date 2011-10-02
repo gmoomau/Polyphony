@@ -47,7 +47,7 @@ function initVotes(socket) {
       var newSongList = '<ol>';
       for(var i=0; i<songs.length; i++){
           var songObj = JSON.parse(songs[i]);
-          newSongList += '<li class="topSong">'+getSongName(songObj)+'</li>';
+          newSongList += '<li class="topSong">'+getSongArtist(songObj) + ' - ' + getSongName(songObj)+'</li>';
       }
       newSongList += '</ol>';
       $("#topSongList").html(newSongList);
