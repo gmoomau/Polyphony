@@ -435,7 +435,8 @@ this.getSetSize = function(setKey, callback) {
 this.changeSongs = function(roomName, callback) {
    // Get first thing from next songs,
    redisClient.zrange('room:'+roomName+':next.songs', -1, -1, function(err, highestSongId) {
-     if (highestSongId != null) {
+     console.log('\n********* next songs: "'+highestSongId+'" is null: ' + (highestSongId == null) + ' is empty str : ' + (highestSongId == ''));
+     if (highestSongId != '') {
        redisClient.get('song:'+highestSongId+':spotify.obj', function(err, highestSong) {
          redisClient.get('room:'+roomName+':cur.song', function(err, cursong) {
            if(cursong != '') {      // Push cursong onto prev songs and LTRIM that list
