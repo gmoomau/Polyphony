@@ -18,6 +18,7 @@ this.initQueue = function(socketIO, rdb, ckh) {
 this.prepareQueue = function(socket) {
   // Adds a song to the queue
   socket.on('song add', function(song){
+   console.log('\n\n******** ADDING A NEW SONG');
     // if song is valid, get info
     spotify.apiLookup(song, function(songInfo){
       socket.get('room', function(err,room) {
@@ -83,16 +84,16 @@ this.addUser = function(socket, room){
     redis.addUserToRoom(userId, room, function(err) {
        // start song playback
         redis.getRoomCurSong(room, function(err,curSongs) {
-         var curSongRes = curSongs[0];
-         if (curSongRes != null) {
-            console.log('\n\n********** cur song: ' + curSongRes + ' \n******* id: ' + curSongRes.songId);
-            var curSong = JSON.parse(curSongRes.songObj);
-            redis.getRoomCurStart (room, function(err, startTime) {
-              var diff = (new Date()).getTime() - startTime;
-              socket.emit('song change', curSongRes.songId, curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
-            });
-         }
-       });
+           var curSongRes = curSongs[0];
+           if (curSongRes != null) {
+              console.log('\n\n********** cur song: ' + curSongRes + ' \n******* id: ' + curSongRes.songId);
+              var curSong = JSON.parse(curSongRes.songObj);
+              redis.getRoomCurStart (room, function(err, startTime) {
+                var diff = (new Date()).getTime() - startTime;
+                socket.emit('song change', curSongRes.songId, curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
+              });
+           }
+         });
 
       // send current song queue to user.  probably a better way to do this?
        console.log('\n\n************* queue waitOn');

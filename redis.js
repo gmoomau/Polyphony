@@ -9,7 +9,7 @@ var self = this;   // keep this as a global so that we can use these functions f
 // but in the future this might not be necessary once the 
 // redis db has been created/used
 this.initRedis = function() {
-  redis.debug_mode = true;
+    //redis.debug_mode = true;
   redisClient.flushall();
   redisClient.set('next.user.id', 0);
   redisClient.set('next.vote.id', 0);
@@ -460,8 +460,10 @@ this.changeSongs = function(roomName, callback) {
          });     
       });
      }
-     else { // no next song
-         callback(err,null,null);
+     else { // no next song, still need to get rid of cur song!!!
+         redisClient.set('room:' + roomName + ':cur.song', '', function(err) {
+           callback(err,null,null);
+             });
      }
 
    });
