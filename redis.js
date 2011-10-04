@@ -13,7 +13,6 @@ this.initRedis = function() {
   redisClient.flushall();
   redisClient.set('next.user.id', 0);
   redisClient.set('next.vote.id', 0);
-  redisClient.set('next.queue.id', 0);
   redisClient.set('next.song.id', 0);
   redisClient.sadd('empty.set', '');  // since sets can't be empty need to add an empty string to them, see NOTE in redis-template, or at the bottom of this file
 }
@@ -444,15 +443,20 @@ this.changeSongs = function(roomName, callback) {
                   redisClient.ltrim('room:'+roomName+':prev.songs', 0,2);
                });
             }
-         
+            
             // set current song in the room
-            redisClient.set('room:'+roomName+':song.start', (new Date()).getTime());
-            redisClient.set('room:'+roomName+':cur.song', highestSongId);
-
             // remove song from the next songs list
-            redisClient.zrem('room:'+roomName+':next.songs', highestSongId);
-           // return the stringified version of the JSON object
-           callback(err,highestSongId,highestSong);       
+           self.waitOn([redisClient.set, ['room:'+roomName+':song.start', (new Date()).getTime()]],
+                        [redisClient.set, ['room:'+roomName+':cur.song', highestSongId]],
+                        [redisClient.zrem, ['room:' + roomName+':next.songs', highestSongId]],
+                        function() {
+      redisClient.zrange('room:'+roomName+':next.songs', 0, -1, function(err, foobar) {
+                console.log('\n********* AFTER REMOVING next songs are: ' + foobar);
+                          
+                          // return the stringified version of the JSON object
+                         callback(err,highestSongId,highestSong);       
+              });              
+            });
          });     
       });
      }

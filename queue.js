@@ -83,16 +83,17 @@ this.addUser = function(socket, room){
     redis.addUserToRoom(userId, room, function(err) {
        // start song playback
         redis.getRoomCurSong(room, function(err,curSongs) {
-         var curSong = curSongs[0];
-         if (curSong != null) {
-             console.log('\n\n********** cur song: ' + curSong);
-            curSong = JSON.parse(curSong.songObj);
+         var curSongRes = curSongs[0];
+         if (curSongRes != null) {
+            console.log('\n\n********** cur song: ' + curSongRes + ' \n******* id: ' + curSongRes.songId);
+            var curSong = JSON.parse(curSongRes.songObj);
             redis.getRoomCurStart (room, function(err, startTime) {
               var diff = (new Date()).getTime() - startTime;
-              socket.emit('song change', curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
+              socket.emit('song change', curSongRes.songId, curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
             });
          }
        });
+
       // send current song queue to user.  probably a better way to do this?
        console.log('\n\n************* queue waitOn');
             redis.waitOn([redis.getRoomPrevSongs, [room]], [redis.getRoomCurSong, [room]], [redis.getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
@@ -125,7 +126,11 @@ this.disconnect = function(socket, room){
 
 function playNextSong(room) {
     redis.changeSongs(room, function(err,curSongId, curSongStr){
+     console.log('\n\n********* song changed. new song is: ' + curSongId + ' ' + curSongStr);
      if (curSongStr != null) {
+         if(songTimeout[room] != null){
+           clearTimeout(songTimeout[room]);
+         }
         curSong = JSON.parse(curSongStr);
         io.sockets.in(room).emit('song change', curSongId, curSong.href, 0,0);
         // set timeout to call changeSongs again after appropriate timeout

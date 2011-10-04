@@ -104,7 +104,7 @@ io.sockets.on('connection', function(socket){
    // save new id in cookie
       if(!err && session){
        // get user an id and set it in the cookie
-       redis.getNewUserId(function(newUserId) {
+          redis.getNewUserId(function(err,newUserId) {
           console.log('\n*********** session found!' + newUserId);
           session.userId = newUserId;
           sessionStore.set(socket.handshake.sessionID, session);

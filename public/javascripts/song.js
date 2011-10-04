@@ -112,25 +112,30 @@ function initSongs(socket) {
    socket.on('song change', function(songId, songURI, mins, secs){
 
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
+      // check to make sure that this song isn't already playing
+      // could happen if a song add gets set before the song change arrives
+      var curSongId = parseInt($(".currentlyPlaying").attr('id'));
 
-      // bump previously played song up
-      var prevSong = $(".currentlyPlaying");
-      prevSong.removeClass("currentlyPlaying");
-      prevSong.addClass("alreadyPlayed");
+      if (songId != curSongId) {
+        // bump previously played song up
+        var prevSong = $(".currentlyPlaying");
+        prevSong.removeClass("currentlyPlaying");
+        prevSong.addClass("alreadyPlayed");
      
-      // check to see if we have > 3 alreadyPlayed songs, if so get rid of one
-      if($(".alreadyPlayed").size() > 3) {
-	  $(".alreadyPlayed:first").remove();
-      }
+        // check to see if we have > 3 alreadyPlayed songs, if so get rid of one
+        if($(".alreadyPlayed").size() > 3) {  
+          $(".alreadyPlayed:first").remove();
+        }
 
-      // mark current song as playing
-      var nowPlaying = $("#"+songId+"_songDiv");
-      nowPlaying.removeClass("comingUp");
-      nowPlaying.addClass("currentlyPlaying");
+         // mark current song as playing
+        var nowPlaying = $("#"+songId+"_songDiv");
+        nowPlaying.removeClass("comingUp");
+        nowPlaying.addClass("currentlyPlaying"); 
+      }
 });
 
 socket.on('song add', function(songInfo, songId, songStatus){
-
+      alert(songInfo + ' ' + songId + ' "' + songStatus+'" ');
       var trackStatus = 'comingUp';
       if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';

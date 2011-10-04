@@ -53,6 +53,7 @@ this.beginChat = function(socket){
           });  // end set user name
        });  // end waitOn
     }); // end of cookieHelper
+
   }); // end of on 'chat name'
 
 
