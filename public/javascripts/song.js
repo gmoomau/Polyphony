@@ -110,7 +110,6 @@ function processResults (spotifyResults) {
 function initSongs(socket) {
 // songStart is either 0, or the time when the song started playing in the room in millis
    socket.on('song change', function(songId, songURI, mins, secs){
-
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
       // check to make sure that this song isn't already playing
       // could happen if a song add gets set before the song change arrives
@@ -135,7 +134,6 @@ function initSongs(socket) {
 });
 
 socket.on('song add', function(songInfo, songId, songStatus){
-      alert(songInfo + ' ' + songId + ' "' + songStatus+'" ');
       var trackStatus = 'comingUp';
       if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';
