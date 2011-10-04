@@ -47,26 +47,31 @@ this.setUserName = function(userId, roomName, newName, callback) {
            var roomUsersSet = 'room:'+roomName+':user.names';
            // Remove old user name from room.usernames and user (if they exist)
            redisClient.srem(roomUsersSet, oldName, function(err,res){})
-           var notAdded = false;
-           // Set username in the room if it doesn't exist
-           // if it does exist, modify the name w/ numbers and then try again
-           while(notAdded) { 
-               redisClient.sadd(roomUsersSet, newName, function(err,reply){
+
+           function ensureUniqueName(name) {
+               // Set username in the room if it doesn't exist
+               // if it does exist, modify the name w/ numbers and then try again
+               redisClient.sadd(roomUsersSet, name, function(err,reply){
                   // reply is the # of elements added to the set. is 0 if the name was already in there
-	           if(reply== 1) { 
-                      notAdded = false;
+                   console.log('\n\n********** roomusers reply:' + reply);
+	           if(reply == 1) { 
+                       // Set new name for user
+                      redisClient.set('user:'+userId+':name', name, function(err,res) {
+                         callback(err, name);
+                      });
                    }
                    else {
-                      newName = namer.numberIt();
+                       setTimeout(ensureUniqueName(namer.numberIt(name)), 0);  // do it this way to prevent real recursion from happening
                    }
-	       });
+               });
            }
+           ensureUniqueName(newName);
         }
-        // if roomName != null it won't get here until after going through the while, right?
-        // Set new name for user
-        redisClient.set('user:'+userId+':name', newName, function(err,res) {
-           callback(err, newName);
-         });
+        else {  // user has no current room so can set name safely
+           redisClient.set('user:'+userId+':name', name, function(err,res) {
+                 callback(err, name);
+           });
+        }
 
       });
 }

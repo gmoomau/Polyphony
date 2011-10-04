@@ -36,20 +36,20 @@ this.beginChat = function(socket){
 
     cookieHelper.getUserId(socket, function(userId) {
         redis.waitOn([redis.getUserRoom, [userId]], [redis.getUserName, [userId]], function(room,oldName) {
-                redis.setUserName(userId,room,name, function(err,setName) {
+            redis.setUserName(userId,room,name, function(err,setName) {
                if(setName != name) {
                   socket.emit('chat message', 'system', 'Someone else is using that name.');
                }
 
-               io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+name);
+               io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+setName);
                sessionStore.get(socket.handshake.sessionID, function(err, session){
                       // save new name in cookie
                       if(!err && session){
-                          session.name = name;
+                          session.name = setName;
                           sessionStore.set(socket.handshake.sessionID, session);
                       }
                 });
-                socket.emit('chat name', name);
+                socket.emit('chat name', setName);
           });  // end set user name
        });  // end waitOn
     }); // end of cookieHelper
