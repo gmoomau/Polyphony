@@ -103,16 +103,13 @@ this.getName = function(socket){
 this.addUser = function(socket, room, callback){
   cookieHelper.getUserId(socket, function(userId) {
     redis.addUserToRoom(userId, room, function(err) {   // will create the room if needed
-            redis.doesRoomExist(room, function(err,val) {
-           console.log('\n\n********* DOES ROOM EXIST IN CHATJS: ' + val);          
       // update users info for everyone in the room
-           redis.waitOn([redis.getUsersInRoom, [room]], [redis.getUserName, [userId]], function(roomUsers,userName) {
-        console.log('\n********** add user waitOn results ', roomUsers, userName);
-        socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
-        socket.emit('chat message', 'system', 'Now listening in: ' + room);
-        io.sockets.in(room).emit('chat users', roomUsers);
-        callback();
-      });
+        redis.waitOn([redis.getUsersInRoom, [room]], [redis.getUserName, [userId]], function(roomUsers,userName) {
+          console.log('\n********** add user waitOn results ', roomUsers, userName);
+          socket.broadcast.to(room).emit('chat message', 'system', userName+ ' connected');
+          socket.emit('chat message', 'system', 'Now listening in: ' + room);
+          io.sockets.in(room).emit('chat users', roomUsers);
+          callback();
      });
     });
   });

@@ -303,9 +303,6 @@ this.addRoom = function(roomName, callback) {
 this.addUserToRoom = function(userId, roomName, callback) {
 
     function add(addRoomResult) {
-        self.doesRoomExist(roomName, function(err,val) {
-            console.log('\n\n********* DOES ROOM EXIST IN ADD ROOM: ' + val);          
-        });
        // set user's room id and add user's id to room
        console.log('\n\n************ addUserToRoom');
        self.waitOn([redisClient.set, ['user:'+userId+':room.name', roomName]],[redisClient.sadd, ['room:'+roomName+':user.ids', userId]], callback);
