@@ -39,7 +39,7 @@ this.isNameTaken = function (name, roomName, callback) {
 // return the user name that we ended up setting (can be different from what was
 //  requested if the name was taken)
 this.setUserName = function(userId, roomName, newName, callback) {
-    console.log('\n************ changing user name');
+    console.log('\n************ changing user name. trying to use ' + newName);
     // Get old user name
     redisClient.get('user:'+userId+':name', 
       function(err, oldName) {
@@ -65,11 +65,12 @@ this.setUserName = function(userId, roomName, newName, callback) {
                    }
                });
            }
+
            ensureUniqueName(newName);
         }
         else {  // user has no current room so can set name safely
-           redisClient.set('user:'+userId+':name', name, function(err,res) {
-                 callback(err, name);
+           redisClient.set('user:'+userId+':name', newName, function(err,res) {
+                 callback(err, newName);
            });
         }
 

@@ -34,6 +34,7 @@ function initChat(socket) {
     var newName = $("#chatNameSet").val();
     $("#chatNameSet").val('');
     socket.emit('chat name',newName);
+    alert('setting name to ' + newName);
   });
 
   $("#chatMessage").keypress(function(e) {

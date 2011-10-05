@@ -84,9 +84,10 @@ this.getName = function(socket){
     } 
 
     cookieHelper.getUserId(socket, function(userId) {
-            redis.getUserRoom(userId, function(err, room) {
+        redis.getUserRoom(userId, function(err, room) {
           // name we want might be taken so we accept the set name here
                     redis.setUserName(userId,room,chatName, function(err,setName) {
+                       console.log('\n\n******* SET NAME TO: ' + setName);
                        socket.emit('chat name', setName);
                        if(session) {
                            session.name = setName;      
@@ -119,14 +120,14 @@ this.addUser = function(socket, room, callback){
 }
 
 this.disconnect = function(socket, room){
-  // cookieHelper.getUserId(socket, function(userId) {
-  //     redis.waitOn([redis.getUserName,[userId]], [redis.removeUserFromRoom, [userId, room]], function(name,unused) {
-  //        redis.getUsersInRoom(room, function(err,roomUsers) {
-  //               io.sockets.in(room).emit('chat users', roomUsers);
-  //             io.sockets.in(room).emit('chat message', 'system', name+' left');
-  //         });
-  //     });
-  //  });
+   cookieHelper.getUserId(socket, function(userId) {
+       redis.waitOn([redis.getUserName,[userId]], [redis.removeUserFromRoom, [userId, room]], function(name,unused) {
+          redis.getUsersInRoom(room, function(err,roomUsers) {
+                 io.sockets.in(room).emit('chat users', roomUsers);
+               io.sockets.in(room).emit('chat message', 'system', name+' left');
+           });
+       });
+    });
 }
 
 module.exports = this;
