@@ -67,7 +67,7 @@ this.prepareQueue = function(socket) {
                  console.log('\n\n************* top songs being emitted: ' + topSongs);
                  // emit the top songs to users in the room
                  io.sockets.in(room).emit('vote topsongs', topSongs);
-                 console.log('\n\n************* songId, newSongAvg' + songId + ' ' +newSongAvg);
+                 console.log('\n\n************* songId, newSongAvg ' + songId + ', ' +newSongAvg);
                  io.sockets.in(room).emit('vote update', songId, newSongAvg);
               });
            });
@@ -119,7 +119,8 @@ this.disconnect = function(socket, room){
    cookieHelper.getUserId(socket, function(userId) {
       redis.getUserVotes(userId, function(err,userVotes) {
        for(var voteId in userVotes) {
-           redis.removeVote(voteId, function(err,unused){});
+           console.log('\n\n****** ABOUT TO REMOVE VOTE ID ' + userVotes[voteId]);
+           redis.removeVote(userVotes[voteId], function(err,unused){});
        }
      });
    });

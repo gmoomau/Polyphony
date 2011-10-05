@@ -119,14 +119,14 @@ this.addUser = function(socket, room, callback){
 }
 
 this.disconnect = function(socket, room){
-  cookieHelper.getUserId(socket, function(userId) {
-          redis.waitOn([redis.getUserName,[userId]], [redis.removeUserFromRoom, [userId, room]], function(name,unused) {
-            redis.getUsersInRoom(room, function(err,roomUsers) {
-            io.sockets.in(room).emit('chat users', roomUsers);
-            io.sockets.in(room).emit('chat message', 'system', name+' left');
-        });
-     });
-  });
+  // cookieHelper.getUserId(socket, function(userId) {
+  //     redis.waitOn([redis.getUserName,[userId]], [redis.removeUserFromRoom, [userId, room]], function(name,unused) {
+  //        redis.getUsersInRoom(room, function(err,roomUsers) {
+  //               io.sockets.in(room).emit('chat users', roomUsers);
+  //             io.sockets.in(room).emit('chat message', 'system', name+' left');
+  //         });
+  //     });
+  //  });
 }
 
 module.exports = this;

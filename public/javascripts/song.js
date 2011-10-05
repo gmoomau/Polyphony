@@ -134,7 +134,7 @@ function initSongs(socket) {
 });
 
 socket.on('song add', function(songInfo, songId, songStatus){
-      alert(songInfo + ' ' + songId + ' ' + songStatus);
+        //alert(songInfo + ' ' + songId + ' ' + songStatus);
       var trackStatus = 'comingUp';
       if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';
@@ -146,15 +146,18 @@ socket.on('song add', function(songInfo, songId, songStatus){
       var songName = getSongName(songInfo);
 
       var trackStr = "<div id='"+songId+"_songDiv' class='"+trackStatus+"'>"+songArtist +" - "+ songName +'';
-      trackStr += "<div class='voteOuter' id='"+songId+"_voteOuter'>";
-      trackStr += "<input id='"+songId+"_voteValue' type='hidden' value='50' />";
-      trackStr += "<div class='voteInner' id='"+songId+"_voteInner'>&nbsp; </div></div>"; // also closes the voteOuter
 
-      trackStr += "<div class='voteOuterAvg'>"; // doesn't need an id
-      trackStr += "<div class='voteInner' id='"+songId+"_voteAvg'>&nbsp;</div></div>";  // also closes the voteOuter
-      trackStr += "<span class='voteSet' id='"+songId+"_voteSet'>Set!</span>"; 
+      if (songStatus == 'next') {
+        trackStr += "<div class='voteOuter' id='"+songId+"_voteOuter'>";
+        trackStr += "<input id='"+songId+"_voteValue' type='hidden' value='50' />";
+        trackStr += "<div class='voteInner' id='"+songId+"_voteInner'>&nbsp; </div></div>"; // also closes the voteOuter 
+
+        trackStr += "<div class='voteOuterAvg'>"; // doesn't need an id
+        trackStr += "<div class='voteInner' id='"+songId+"_voteAvg'>&nbsp;</div></div>";  // also closes the voteOuter
+        trackStr += "<span class='voteSet' id='"+songId+"_voteSet'>Set!</span>"; 
+      }
+
       trackStr += "</div><p />";  // also closes the track div and voteOuter
-
       $(trackStr).hide().appendTo("#queue").slideDown('slow');
       $("#"+songId+"_voteSet").hide();
       $("#"+songId+"_voteOuter").mousemove(slideVote);

@@ -270,11 +270,13 @@ this.getUserVotes = function(userId, callback) {
 }
 
 this.removeVote = function(voteId, callback) {
-    redisClient.get('vote:'+voteId+':song.id', function(err, songId) {
+   redisClient.get('vote:'+voteId+':song.id', function(err, songId) {
+      console.log('\n******** REMOVE VOTE ' + voteId + 'FROM ' + songId);
       // set the song's vote total and update the vote
       self.updateVote(songId, voteId, 0, function(err) {
          // remove vote from the song's set of votes
          redisClient.srem('song:'+songId+':votes', voteId, function(err, res) {
+
            // don't remove from user or db since we may do this only when
            // a user has switched rooms, so we can reuse the vote maybe?
            callback(err,true);
@@ -389,15 +391,31 @@ this.updateVote = function(songId, voteId, newValue, callback) {
               var roomName = replies[2];
               // set value of song in sorted set  
              console.log('\n******** UPDATE VOTE ROOM NAME ' + roomName);
-             redisClient.zadd('room:'+roomName+':next.songs', voteTotal, songId, function(err,res) {
-                 redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1, function(err2,res2) {
-                    if(err || err2) { console.log('\n\n************* ERROR ERROR ERROR in update Vote ****************');}
-                    console.log('\n********** nextsongs after update vote ' + res2);
-                    console.log('\n********** NEW VOTE TOTAL ' + voteTotal+'\n******'+songId);
-                 })
-                    // returns the new score of the song / number of users
+             // Only update the vote total if the song is in fact a next song!
+             //  this should be insured on the client side by not having any of the vote
+             //  bars displayed if the song isn't an upcoming song, but just in case we have a test
+             //  for it here too.
+             redisClient.zscore('room:'+roomName + ':next.songs', songId, function(err, songExists) {
+               console.log('\n\n******** zscore is null ' + (songExists == null) + ' is empty ' + (songExists == '') + ' actually is "'+songExists+'"');
+               // zscore returns nil if the member isn't found
+               if (songExists != null) {
+               redisClient.zadd('room:'+roomName+':next.songs', voteTotal, songId, function(err,res) {
+                   redisClient.zrevrange('room:'+roomName+':next.songs', 0,-1, function(err2,res2) {
+                      if(err || err2) { console.log('\n\n************* ERROR ERROR ERROR in update Vote ****************');}
+                      console.log('\n********** nextsongs after update vote ' + res2);
+                      console.log('\n********** NEW VOTE TOTAL ' + voteTotal+'\n******'+songId);
+                   })
+                  // returns the new score of the song / number of users
                  callback(err,voteTotal / voteCount);
                });
+              }
+              else {
+                   // song not found in next.songs so we ignore the vote
+                   // potentially this section could be reworked so that a song as a status or something
+                   //   so we know where to look
+                   callback(err, 0);
+              }
+             }); // end zscore callback
            });
     });
 
@@ -455,6 +473,7 @@ this.changeSongs = function(roomName, callback) {
                         [redisClient.set, ['room:'+roomName+':cur.song', highestSongId]],
                         [redisClient.zrem, ['room:' + roomName+':next.songs', highestSongId]],
                         function() {
+      console.log('\n*********** REMOVING: ' + highestSongId);
       redisClient.zrange('room:'+roomName+':next.songs', 0, -1, function(err, foobar) {
                 console.log('\n********* AFTER REMOVING next songs are: ' + foobar);
                           
