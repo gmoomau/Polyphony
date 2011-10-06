@@ -1,3 +1,5 @@
+list rooms with people in them on the main page
+
 playlist history - 3 song history displayed/stored.  easier to store more w/ db
 song selection modes (queue, cycle through djs, ...)
 
@@ -13,7 +15,6 @@ custom error pages
 Layout changes:
   - auto-vote to 100% if you added a song
   - album art etc
-  - song queue will continually grow even if there are 1000s of songs in it
   - colorscheme?
   - textbox (on / too) where you type in a room name and click enter and you go
   - button you click to jump to current playtime? (eg for if you got hit by a commercial and want to get back to the same play spot as the group)

@@ -42,6 +42,12 @@ input {
 }
 
 #queue {
+  max-height: 190px;
+  overflow-y: auto;
+  border: 1px solid;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  padding: 5px;
 }
 
 #search{
@@ -74,7 +80,7 @@ input {
   padding-top: 10px;  
   border: 1px solid grey;
   border-radius: 5px;
-  -moz-border-radius: 1px;
+  -moz-border-radius: 5px;
 }
 
 .scrolling::-webkit-scrollbar {
@@ -87,6 +93,19 @@ input {
   -webkit-border-radius: 1ex;  
   -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .4);  
 }
+
+.scrollingLight::-webkit-scrollbar {
+  width: 1.5ex;
+  -webkit-border-radius: 1ex;
+}
+
+.scrollingLight::-webkit-scrollbar-thumb:vertical {
+  border: 1px solid #fff;
+  background: rgba(0, 0, 0, .2);
+  -webkit-border-radius: 1ex;  
+  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .4);  
+}
+
 
 #chat{
   float: left;
