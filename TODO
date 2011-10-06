@@ -1,11 +1,8 @@
 playlist history - 3 song history displayed/stored.  easier to store more w/ db
-voting - set current top 3 songs, and use them
 song selection modes (queue, cycle through djs, ...)
 
 album support // may not be necessary since search can handle that basically
 useful error messages
-
-refactor code
 
 playlist support?
 recommendations
