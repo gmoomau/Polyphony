@@ -133,8 +133,14 @@ function initSongs(socket) {
       }
 });
 
+// No more songs being played, make it obvious to user
+socket.on('song end', function() {
+    var prevSong = $(".currentlyPlaying");
+    prevSong.removeClass("currentlyPlaying");
+    prevSong.addClass("alreadyPlayed");    
+});
+
 socket.on('song add', function(songInfo, songId, songStatus){
-        //alert(songInfo + ' ' + songId + ' ' + songStatus);
       var trackStatus = 'comingUp';
       if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';

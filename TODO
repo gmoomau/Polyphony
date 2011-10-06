@@ -23,5 +23,3 @@ Layout changes:
 limit room names to some length (25 chars?)
 
 make cookies expire after some amount of time (a few days?)
-
-redis

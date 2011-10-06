@@ -58,7 +58,7 @@ input {
 #chatHistory{
   overflow-y: auto;
   word-wrap: break-word;
-  float: right;
+  float: left;
   width: 85%;
   height: 350px;
   border: 10px;

@@ -2,10 +2,10 @@ function initChat(socket) {
   socket.on('chat clients', function(clientList){
      $("#chatClients").html('<b>Users:</b><p />');
      for(var idx in clientList) {
-        $("#chatClients").append(clientList[idx].name + '<p />');
+        $("#chatClients").append('<p>'+clientList[idx].name + '</p>');
      }
-    $("#clients").text(clientList.length + " people currently connected");
-  });
+     $("#clients").text(clientList.length + " people currently connected"); 
+      });
 
   socket.on('disconnect', function() {
     socket.emit('disconnect');

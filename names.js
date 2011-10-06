@@ -12,7 +12,7 @@ this.generalName = function(){
 this.numberIt = function(base){
   var chars = '0123456789';
   var name = base;
-  for(var i = 0;i<5;i++) {
+  for(var i = 0;i<3;i++) {
     var rnum = Math.floor(Math.random()*chars.length);
     name += chars[rnum];
   }

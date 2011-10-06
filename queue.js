@@ -32,6 +32,9 @@ this.prepareQueue = function(socket) {
                      console.log('\n\n*********** songid: ' + songId + ' ' + songObject.name);
                      io.sockets.in(room).emit('song add', songObject, songId, 'next');
                      console.log('\n\n*********** '+io.sockets.in(room));
+                     redis.getClientName(socket.id, function(err, name) {
+                         io.sockets.in(room).emit('chat message', 'system', name + ' added ' + songObject.artists[0].name + ' - ' + songObject.name);
+                     });
              });   
           });
         }
@@ -47,6 +50,9 @@ this.prepareQueue = function(socket) {
            clearTimeout(songTimeout[room]);
          }
          playNextSong(room);
+         redis.getClientName(clientId, function(err, name) {
+            io.sockets.in(room).emit('chat message', 'system', name + ' changed songs');
+         });
        });
     });
   });
@@ -147,6 +153,8 @@ function playNextSong(room) {
      else {
         // No current song to play, get rid of currentlyPlaying on client?
         // Go to a state where we immediately start playing the next song to be added?
+        io.sockets.in(room).emit('song end');
+        io.sockets.in(room).emit('vote topsongs', null);
      }
    }); 
 
