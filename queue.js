@@ -81,7 +81,6 @@ this.addClient = function(socket, room){
     // addRoom will return false if the room already exists
     // otherwise it will initialize all the queue stuff for us
   cookieHelper.getClientId(socket, function(clientId) {
-    redis.addClientToRoom(clientId, room, function(err) {
        // start song playback
         redis.getRoomCurSong(room, function(err,curSongs) {
            var curSongRes = curSongs[0];
@@ -111,7 +110,6 @@ this.addClient = function(socket, room){
               socket.emit('song add', JSON.parse(nextSongs[song].songObj), nextSongs[song].songId, 'next');
           }    
        });
-    });
  });  // end cookieHelper
 }
 

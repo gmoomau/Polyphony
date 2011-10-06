@@ -38,22 +38,27 @@ this.isNameTaken = function (name, roomName, callback) {
 // if roomName == null, then we ignore that check entirely
 // return the client name that we ended up setting (can be different from what was
 //  requested if the name was taken)
-this.setClientName = function(clientId, roomName, newName, callback) {
+// joining == true means the user is just now joining the room
+this.setClientName = function(clientId, roomName, newName, joining, callback) {
     console.log('\n************ changing client name. trying to use ' + newName);
     // Get old client name
     redisClient.get('client:'+clientId+':name', 
       function(err, oldName) {
         if (roomName != null) {
+           console.log('\n\n****** CHANGING NAME room name not null ' + roomName);
            var roomClientsSet = 'room:'+roomName+':client.names';
-           // Remove old client name from room.clientnames and client (if they exist)
-           redisClient.srem(roomClientsSet, oldName, function(err,res){})
+           // If this user did not just join the room, remove old client name from room.clientnames
+           if (!joining) {
+             redisClient.srem(roomClientsSet, oldName, function(err,res){})
+           }
 
            function ensureUniqueName(name) {
+              console.log('\n\n****** CHANGING NAME ensureUniqueName '+name);
                // Set clientname in the room if it doesn't exist
                // if it does exist, modify the name w/ numbers and then try again
                redisClient.sadd(roomClientsSet, name, function(err,reply){
                   // reply is the # of elements added to the set. is 0 if the name was already in there
-                   console.log('\n\n********** roomclients reply:' + reply);
+                   console.log('\n\n********** roomclients '+name+' reply: ' + reply);
 	           if(reply == 1) { 
                        // Set new name for client
                       redisClient.set('client:'+clientId+':name', name, function(err,res) {
@@ -69,6 +74,7 @@ this.setClientName = function(clientId, roomName, newName, callback) {
            ensureUniqueName(newName);
         }
         else {  // client has no current room so can set name safely
+           console.log('\n\n****** CHANGING NAME room name is null');
            redisClient.set('client:'+clientId+':name', newName, function(err,res) {
                  callback(err, newName);
            });
@@ -299,13 +305,21 @@ this.addRoom = function(roomName, callback) {
        });
 }
 
-// no return
+// no useful return
 this.addClientToRoom = function(clientId, roomName, callback) {
 
     function add(addRoomResult) {
-       // set client's room id and add client's id to room
-       console.log('\n\n************ addClientToRoom');
-       self.waitOn([redisClient.set, ['client:'+clientId+':room.name', roomName]],[redisClient.sadd, ['room:'+roomName+':client.ids', clientId]], callback);
+          self.waitOn([self.getClientName, [clientId]],
+                      [redisClient.set, ['client:'+clientId+':room.name', roomName]],
+                      [redisClient.sadd, ['room:'+roomName+':client.ids', clientId]],
+                      function(name){
+            self.setClientName(clientId, roomName, name, true, function (err, newname) {
+                // set client's room id and add client's id to room
+                console.log('\n\n************ addClientToRoom ' + newname);
+                callback();
+            });
+          });
+
     }
 
     // see if room exists, if not create it.

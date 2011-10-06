@@ -33,7 +33,7 @@ this.beginChat = function(socket){
 
     cookieHelper.getClientId(socket, function(clientId) {
         redis.waitOn([redis.getClientRoom, [clientId]], [redis.getClientName, [clientId]], function(room,oldName) {
-            redis.setClientName(clientId,room,name, function(err,setName) {
+            redis.setClientName(clientId,room,name, false,function(err,setName) {
                if(setName != name) {
                   socket.emit('chat message', 'system', 'Someone else is using that name.');
                }
@@ -81,9 +81,7 @@ this.getName = function(socket){
     } 
 
     cookieHelper.getClientId(socket, function(clientId) {
-        redis.getClientRoom(clientId, function(err, room) {
-          // name we want might be taken so we accept the set name here
-                    redis.setClientName(clientId,room,chatName, function(err,setName) {
+        redis.setClientName(clientId,null,chatName, false, function(err,setName) {  
                        console.log('\n\n******* SET NAME TO: ' + setName);
                        socket.emit('chat name', setName);
                        if(session) {
@@ -91,7 +89,6 @@ this.getName = function(socket){
                            sessionStore.set(socket.handshake.sessionID, session);
                        }
               }); //end set clientname
-           }); // end get client room
         });   // end cookiehelper
    });
  console.log('\n************** end of chat get name ');
@@ -106,6 +103,16 @@ this.addClient = function(socket, room, callback){
           socket.broadcast.to(room).emit('chat message', 'system', clientName+ ' connected');
           socket.emit('chat message', 'system', 'Now listening in: ' + room);
           io.sockets.in(room).emit('chat clients', roomClients);
+
+          // save new name in cookie
+          sessionStore.get(socket.handshake.sessionID, function(err, session){
+                      if(!err && session){
+                          session.name = clientName;
+                          sessionStore.set(socket.handshake.sessionID, session);
+                      }
+                });
+          socket.emit('chat name', clientName);
+
           callback();
      });
     });
