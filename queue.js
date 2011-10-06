@@ -28,7 +28,7 @@ this.prepareQueue = function(socket) {
         else{
           var songObject = JSON.parse(songInfo).track;
           redis.addSong(songObject, function(err,songId) {
-             redis.addSongToRoom(songId,room, function(err){  // wait until song is added to alert users (in case something bad happens/so they can't vote)
+             redis.addSongToRoom(songId,room, function(err){  // wait until song is added to alert clients (in case something bad happens/so they can't vote)
                      console.log('\n\n*********** songid: ' + songId + ' ' + songObject.name);
                      io.sockets.in(room).emit('song add', songObject, songId, 'next');
                      console.log('\n\n*********** '+io.sockets.in(room));
@@ -41,8 +41,8 @@ this.prepareQueue = function(socket) {
 
   // Start playing a song
   socket.on('song start', function(client){
-    cookieHelper.getUserId(socket, function(userId) {
-      redis.getUserRoom(userId, function(err, room) {
+    cookieHelper.getClientId(socket, function(clientId) {
+      redis.getClientRoom(clientId, function(err, room) {
          if(songTimeout[room] != null){
            clearTimeout(songTimeout[room]);
          }
@@ -51,21 +51,21 @@ this.prepareQueue = function(socket) {
     });
   });
 
-  // User changed vote
+  // Client changed vote
   socket.on('vote', function(songId, vote) {
-     console.log('\n\n************* user is voting!' + songId + ' ' +vote);
-     // get the user's id
-     cookieHelper.getUserId(socket, function(userId) {
+     console.log('\n\n************* client is voting!' + songId + ' ' +vote);
+     // get the client's id
+     cookieHelper.getClientId(socket, function(clientId) {
         // get the room for sending message later, also get the vote to update
-             redis.waitOn([redis.getUserRoom, [userId]], [redis.getVoteId, [userId, songId]], function (room, voteId) {
+             redis.waitOn([redis.getClientRoom, [clientId]], [redis.getVoteId, [clientId, songId]], function (room, voteId) {
           console.log('\n\n************* vote: done waitOn!' + room + ' ' +voteId);
-           // update the vote for the user
+           // update the vote for the client
           redis.updateVote(songId, voteId, vote, function(err,newSongAvg) {
               console.log('\n\n************* updated vote!' + songId + ' ' +vote);
               // find the new top songs now that the song's score has changed
               redis.getTopSongs(room, NUM_TOP_SONGS, function(err,topSongs) {
                  console.log('\n\n************* top songs being emitted: ' + topSongs);
-                 // emit the top songs to users in the room
+                 // emit the top songs to clients in the room
                  io.sockets.in(room).emit('vote topsongs', topSongs);
                  console.log('\n\n************* songId, newSongAvg ' + songId + ', ' +newSongAvg);
                  io.sockets.in(room).emit('vote update', songId, newSongAvg);
@@ -77,11 +77,11 @@ this.prepareQueue = function(socket) {
 
 }
 
-this.addUser = function(socket, room){
+this.addClient = function(socket, room){
     // addRoom will return false if the room already exists
     // otherwise it will initialize all the queue stuff for us
-  cookieHelper.getUserId(socket, function(userId) {
-    redis.addUserToRoom(userId, room, function(err) {
+  cookieHelper.getClientId(socket, function(clientId) {
+    redis.addClientToRoom(clientId, room, function(err) {
        // start song playback
         redis.getRoomCurSong(room, function(err,curSongs) {
            var curSongRes = curSongs[0];
@@ -95,7 +95,7 @@ this.addUser = function(socket, room){
            }
          });
 
-      // send current song queue to user.  probably a better way to do this?
+      // send current song queue to client.  probably a better way to do this?
        console.log('\n\n************* queue waitOn');
             redis.waitOn([redis.getRoomPrevSongs, [room]], [redis.getRoomCurSong, [room]], [redis.getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
           for(var song in prevSongs){
@@ -116,11 +116,11 @@ this.addUser = function(socket, room){
 }
 
 this.disconnect = function(socket, room){
-   cookieHelper.getUserId(socket, function(userId) {
-      redis.getUserVotes(userId, function(err,userVotes) {
-       for(var voteId in userVotes) {
-           console.log('\n\n****** ABOUT TO REMOVE VOTE ID ' + userVotes[voteId]);
-           redis.removeVote(userVotes[voteId], function(err,unused){});
+   cookieHelper.getClientId(socket, function(clientId) {
+      redis.getClientVotes(clientId, function(err,clientVotes) {
+       for(var voteId in clientVotes) {
+           console.log('\n\n****** ABOUT TO REMOVE VOTE ID ' + clientVotes[voteId]);
+           redis.removeVote(clientVotes[voteId], function(err,unused){});
        }
      });
    });
@@ -141,7 +141,7 @@ function playNextSong(room) {
         }, curSong.length*1000);
         // find the new top songs now that a song is off the next song list
         redis.getTopSongs(room, NUM_TOP_SONGS, function(err,topSongs) {
-            // emit the top songs to users in the room
+            // emit the top songs to clients in the room
             io.sockets.in(room).emit('vote topsongs', topSongs);
         });
 

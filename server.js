@@ -103,19 +103,15 @@ io.sockets.on('connection', function(socket){
   sessionStore.get(socket.handshake.sessionID, function(err, session){
    // save new id in cookie
       if(!err && session){
-       // get user an id and set it in the cookie
-          redis.getNewUserId(function(err,newUserId) {
-          console.log('\n*********** session found!' + newUserId);
-          session.userId = newUserId;
-          sessionStore.set(socket.handshake.sessionID, session);
-          chat.beginChat(socket);
-          queue.prepareQueue(socket);
-       });
+             console.log('\n*********** session found!' + socket.id);
+             sessionStore.set(socket.handshake.sessionID, session);
+             chat.beginChat(socket);
+             queue.prepareQueue(socket);
       }
    });
 
 
-  // when user disconnects, we have to remove username
+  // when client disconnects, we have to remove clientname
   socket.on('disconnect', function() {
     socket.get('room', function(err, room) {
       if(room != null){
@@ -125,12 +121,12 @@ io.sockets.on('connection', function(socket){
     });
   });
 
-  // join a user to a given room
+  // join a client to a given room
   socket.on('join room', function(room) {
     console.log('\n******** joining a room');
     socket.join(room);           // put socket in socketroom
-    chat.addUser(socket, room, function() {
-       queue.addUser(socket, room);
+    chat.addClient(socket, room, function() {
+       queue.addClient(socket, room);
     });  // serialized chat and queue b/c o/w both might end up making a room
     
     console.log('JOINED '+room);

@@ -5,16 +5,16 @@ I. Things to keep track of
     i. Per user for changing votes and for when a user leaves the room
     i. Per song to compute the song average
 
-  B. users
+  B. clients
     i. Name
     ii. Votes so we can change easily
     iii. Room id
 
   C. rooms
     i. Name
-    ii. Users
+    ii. Clients
       a. Ids for sending messages etc
-      b. Taken user names
+      b. Taken client names
     iii. Song queue
 
   D. songs
@@ -33,25 +33,25 @@ II. Proposed methods
      ii.  We don't need to keep track of order of anything really except for songs in the queue
        a. Therefore can use sets instead of lists.  I don't think lists can do member searches, so this is doubly good.
        b. The queue should be a sorted set based on song avg vote values
-         i. Can probably keep the queue up to date without straining system, since users won't frequently change votes...?
+         i. Can probably keep the queue up to date without straining system, since clients won't frequently change votes...?
          ii. Most likely it'll be easier to just store integer number of total votes for a song rather than avg
-           a. Only compute average when needed to display to user (possibly difficult race condition with users leaving since this needs two queries)
-     iii. Rooms are id'd by name instead of id since the user will always be joining by name and o/w we'd need to look it up somehow
-     iv. User ids are stored in a cookie
+           a. Only compute average when needed to display to client (possibly difficult race condition with clients leaving since this needs two queries)
+     iii. Rooms are id'd by name instead of id since the client will always be joining by name and o/w we'd need to look it up somehow
+     iv. Client ids are stored in a cookie
 
    B. votes
      i. vote:id:song.id         --> int song id
      ii. vote:id:value          --> int value \in 0-100
      iii. vote:id:room.name     --> string room name
 
-   C. users
-     i. user:id:name            --> string
-     ii. user:id:votes          --> set of vote ids
-     iii. user:id:room.name     --> string room name the user's in
+   C. clients
+     i. client:id:name            --> string
+     ii. client:id:votes          --> set of vote ids
+     iii. client:id:room.name     --> string room name the client's in
 
    D. rooms
-     i. room:name:user.ids      --> set of user ids
-     iii. room:name:user.names  --> set of user names in this room
+     i. room:name:client.ids      --> set of client ids
+     iii. room:name:client.names  --> set of client names in this room
    
      // Got rid of queue structure since it seemed like an unnecssary step to
      //   go from a roomname to a queueid.

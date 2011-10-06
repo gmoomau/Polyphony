@@ -27,36 +27,36 @@ this.getNewUserId = function(callback) {
 
 this.isNameTaken = function (name, roomName, callback) {
     // check room to see if the given name is taken
-    redisClient.sismember('room:'+roomName+'user.names',name, 
+    redisClient.sismember('room:'+roomName+'client.names',name, 
       function(err,reply) {
           callback(err, reply);
     });
 }
 
-// if user name is already taken in the room, then we add digits to it to 
+// if client name is already taken in the room, then we add digits to it to 
 // make it unique
 // if roomName == null, then we ignore that check entirely
-// return the user name that we ended up setting (can be different from what was
+// return the client name that we ended up setting (can be different from what was
 //  requested if the name was taken)
-this.setUserName = function(userId, roomName, newName, callback) {
-    console.log('\n************ changing user name. trying to use ' + newName);
-    // Get old user name
-    redisClient.get('user:'+userId+':name', 
+this.setClientName = function(clientId, roomName, newName, callback) {
+    console.log('\n************ changing client name. trying to use ' + newName);
+    // Get old client name
+    redisClient.get('client:'+clientId+':name', 
       function(err, oldName) {
         if (roomName != null) {
-           var roomUsersSet = 'room:'+roomName+':user.names';
-           // Remove old user name from room.usernames and user (if they exist)
-           redisClient.srem(roomUsersSet, oldName, function(err,res){})
+           var roomClientsSet = 'room:'+roomName+':client.names';
+           // Remove old client name from room.clientnames and client (if they exist)
+           redisClient.srem(roomClientsSet, oldName, function(err,res){})
 
            function ensureUniqueName(name) {
-               // Set username in the room if it doesn't exist
+               // Set clientname in the room if it doesn't exist
                // if it does exist, modify the name w/ numbers and then try again
-               redisClient.sadd(roomUsersSet, name, function(err,reply){
+               redisClient.sadd(roomClientsSet, name, function(err,reply){
                   // reply is the # of elements added to the set. is 0 if the name was already in there
-                   console.log('\n\n********** roomusers reply:' + reply);
+                   console.log('\n\n********** roomclients reply:' + reply);
 	           if(reply == 1) { 
-                       // Set new name for user
-                      redisClient.set('user:'+userId+':name', name, function(err,res) {
+                       // Set new name for client
+                      redisClient.set('client:'+clientId+':name', name, function(err,res) {
                          callback(err, name);
                       });
                    }
@@ -68,8 +68,8 @@ this.setUserName = function(userId, roomName, newName, callback) {
 
            ensureUniqueName(newName);
         }
-        else {  // user has no current room so can set name safely
-           redisClient.set('user:'+userId+':name', newName, function(err,res) {
+        else {  // client has no current room so can set name safely
+           redisClient.set('client:'+clientId+':name', newName, function(err,res) {
                  callback(err, newName);
            });
         }
@@ -78,9 +78,9 @@ this.setUserName = function(userId, roomName, newName, callback) {
 }
 
 
-this.getUserName = function(userId, callback) {
-    // return the user's name
-    redisClient.get('user:'+userId+':name',
+this.getClientName = function(clientId, callback) {
+    // return the client's name
+    redisClient.get('client:'+clientId+':name',
       function(err, name) {
           callback(err, name);
       }
@@ -88,11 +88,11 @@ this.getUserName = function(userId, callback) {
 
 }
 
-this.getUserRoom = function(userId, callback) {
-    // return the name of the room that the user is in
-    redisClient.get('user:'+userId+':room.name', 
+this.getClientRoom = function(clientId, callback) {
+    // return the name of the room that the client is in
+    redisClient.get('client:'+clientId+':room.name', 
       function(err,roomName) {
-          console.log('\n\n*********** user room:' + userId + ' ' + roomName);
+          console.log('\n\n*********** client room:' + clientId + ' ' + roomName);
           callback(err, roomName);
       });
 }
@@ -168,18 +168,18 @@ this.getRoomPrevSongs = function(roomName, callback) {
 
 this.doesRoomExist = function(roomName, callback) {
     // return true if the room already exists
-    redisClient.exists('room:'+roomName+':user.ids', function(err,roomExists) {
+    redisClient.exists('room:'+roomName+':client.ids', function(err,roomExists) {
       callback(err,roomExists);
    });
 }
 
 
-this.getUsersInRoom = function(roomName, callback) {
-  // should return a list of user ids and names, but for now
-  // just returns the user ids
-  self.getSet('room:'+roomName+':user.ids', function(err,users) {
-     console.log('\n\n*********** USERS IN ROOM : ' + users);
-     callback(err,users);
+this.getClientsInRoom = function(roomName, callback) {
+  // should return a list of client ids and names, but for now
+  // just returns the client ids
+  self.getSet('room:'+roomName+':client.ids', function(err,clients) {
+     console.log('\n\n*********** CLIENTS IN ROOM : ' + clients);
+     callback(err,clients);
   });
 }
 
@@ -264,8 +264,8 @@ this.getTopSongs = function(roomName, numSongs, callback) {
 }
 
 
-this.getUserVotes = function(userId, callback) {
-   self.getSet('user:'+userId+':votes', function(err,members) {
+this.getClientVotes = function(clientId, callback) {
+   self.getSet('client:'+clientId+':votes', function(err,members) {
        callback(err,members);
    });
 }
@@ -278,8 +278,8 @@ this.removeVote = function(voteId, callback) {
          // remove vote from the song's set of votes
          redisClient.srem('song:'+songId+':votes', voteId, function(err, res) {
 
-           // don't remove from user or db since we may do this only when
-           // a user has switched rooms, so we can reuse the vote maybe?
+           // don't remove from client or db since we may do this only when
+           // a client has switched rooms, so we can reuse the vote maybe?
            callback(err,true);
          });
       });
@@ -290,8 +290,8 @@ this.addRoom = function(roomName, callback) {
     // add a new room with a given roomName to the server
     // be sure to use SETNX for this stuff to avoid race condition
     redisClient.multi()
-       .sadd('room:'+roomName+':user.ids', '')
-       .sadd('room:'+roomName+':user.names','')
+       .sadd('room:'+roomName+':client.ids', '')
+       .sadd('room:'+roomName+':client.names','')
        .setnx('room:'+roomName+':cur.song', '')
        .exec(function(err,replies) {
          // no return 
@@ -300,16 +300,16 @@ this.addRoom = function(roomName, callback) {
 }
 
 // no return
-this.addUserToRoom = function(userId, roomName, callback) {
+this.addClientToRoom = function(clientId, roomName, callback) {
 
     function add(addRoomResult) {
-       // set user's room id and add user's id to room
-       console.log('\n\n************ addUserToRoom');
-       self.waitOn([redisClient.set, ['user:'+userId+':room.name', roomName]],[redisClient.sadd, ['room:'+roomName+':user.ids', userId]], callback);
+       // set client's room id and add client's id to room
+       console.log('\n\n************ addClientToRoom');
+       self.waitOn([redisClient.set, ['client:'+clientId+':room.name', roomName]],[redisClient.sadd, ['room:'+roomName+':client.ids', clientId]], callback);
     }
 
     // see if room exists, if not create it.
-    redisClient.exists('room:'+roomName+':user.ids', function(err, exists) {
+    redisClient.exists('room:'+roomName+':client.ids', function(err, exists) {
            console.log('\n\n************ SOMETHING SOMETHING');     
        if(!exists) {
            console.log('\n\n************ room doesnt exist');
@@ -323,14 +323,14 @@ this.addUserToRoom = function(userId, roomName, callback) {
 
 }
 
-this.removeUserFromRoom = function(userId, roomName, callback) {
-    // remove roomName from user's room id
-    // remove username and user id from room
-    console.log('\n\n*********** removing user from room');
-    self.getUserName(userId, function(err,name) {
-       self.waitOn([redisClient.srem,['room:'+roomName+':user.ids', userId]],
-              [redisClient.srem,['room:'+roomName+':user.names', name]],
-              [redisClient.set,['user:'+userId+':room.name', '']],
+this.removeClientFromRoom = function(clientId, roomName, callback) {
+    // remove roomName from client's room id
+    // remove clientname and client id from room
+    console.log('\n\n*********** removing client from room');
+    self.getClientName(clientId, function(err,name) {
+       self.waitOn([redisClient.srem,['room:'+roomName+':client.ids', clientId]],
+              [redisClient.srem,['room:'+roomName+':client.names', name]],
+              [redisClient.set,['client:'+clientId+':room.name', '']],
              function() {
                callback(err,true);
             });
@@ -338,20 +338,20 @@ this.removeUserFromRoom = function(userId, roomName, callback) {
 
 }
 
-this.getVoteId = function(userId, songId, callback) {
-    // return the id of the vote associated with this user and song
-    // get it by intersecting the user's vote list and song's vote list
-    redisClient.sinter('song:'+songId+':votes', 'user:'+userId+':votes', function (err, res) {
+this.getVoteId = function(clientId, songId, callback) {
+    // return the id of the vote associated with this client and song
+    // get it by intersecting the client's vote list and song's vote list
+    redisClient.sinter('song:'+songId+':votes', 'client:'+clientId+':votes', function (err, res) {
       console.log('\n\n************* results from getVote! "' + res+'"');
       if (res[0] == null){        // res is some object no matter what apparently. i.e. if the vote wasn't found, (res == null) -> false
          console.log('\n\n************* vote not found! ');
         // return a new id if the vote is not found
          self.getNewVoteId(function(err,newid) {
              console.log('\n\n************* new vote id!' + newid);
-             // Add the new song id to the user's and song's vote set
+             // Add the new song id to the client's and song's vote set
              self.waitOn([redisClient.sadd, ['song:'+songId+':votes', newid]],
-                         [redisClient.sadd, ['user:'+userId+':votes', newid]],
-                         [self.getUserRoom, [userId]],
+                         [redisClient.sadd, ['client:'+clientId+':votes', newid]],
+                         [self.getClientRoom, [clientId]],
                          function(add1,add2, roomName) { 
                          // also need to initialize the vote object
                            self.waitOn([redisClient.set, ['vote:'+newid+':song.id', songId]],
@@ -403,7 +403,7 @@ this.updateVote = function(songId, voteId, newValue, callback) {
                       console.log('\n********** nextsongs after update vote ' + res2);
                       console.log('\n********** NEW VOTE TOTAL ' + voteTotal+'\n******'+songId);
                    })
-                  // returns the new score of the song / number of users
+                  // returns the new score of the song / number of clients
                  callback(err,voteTotal / voteCount);
                });
               }
@@ -496,7 +496,7 @@ this.changeSongs = function(roomName, callback) {
 // arg1...argN-1 look like [redisFnToCall, redisArgs] note that redisArgs must be an array
 //   so that we can push the appropriate callback into it
 // when they've completed, callback will be called with the return values in order
-//   eg: redisClient.waitOn([redisClient.getUserName, [3]], [redisClient.getNewSongId, []], returnFn)
+//   eg: redisClient.waitOn([redisClient.getClientName, [3]], [redisClient.getNewSongId, []], returnFn)
 //       returnFn will be called as: returnFn(song3sAvg, newSongId);
 // should be used anytime there are multiple calls that are needed, but don't rely on each
 // other.  not necessarily just getter functions 
