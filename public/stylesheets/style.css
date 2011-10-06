@@ -52,8 +52,8 @@ input {
 #chatHistory{
   overflow-y: auto;
   word-wrap: break-word;
-  float: left
-  width: 100%;
+  float: right;
+  width: 85%;
   height: 350px;
   border: 10px;
   border-radius: 10px;
@@ -63,6 +63,18 @@ input {
   padding-top: 10px;
   background: #FFFFFF;
   color: #000000;
+}
+
+#chatClients {
+  overflow-y: auto;
+  word-wrap: break-word;
+  height: 350px;
+  margin: 5px;
+  padding: 5px;
+  padding-top: 10px;  
+  border: 1px solid grey;
+  border-radius: 5px;
+  -moz-border-radius: 1px;
 }
 
 .scrolling::-webkit-scrollbar {

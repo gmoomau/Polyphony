@@ -109,7 +109,7 @@ this.getSongObjsFromIds = function(songIdArray, callback) {
   // songIds / songObjs with attributes
   var functions = [];
   for(var idx=0; idx < songIdArray.length; idx++){
-      functions.push([redisClient.get, ['song:'+songIdArray[idx]+':spotify.obj']]); //functions[idx] = [redisClient.get, ['song:'+songIdArray[idx]+':spotify.obj']];
+      functions.push([redisClient.get, ['song:'+songIdArray[idx]+':spotify.obj']]);
       console.log('\n\n********** top songs converting list: ' + functions[idx]);
   }
 
@@ -117,7 +117,6 @@ this.getSongObjsFromIds = function(songIdArray, callback) {
       // function called when all the song ids have been turned into spotify objects
           var songIdObjArray = [];
           for(var i=0; i< arguments.length; i++) {
-             console.log('\n\n********** top songs results:' + arguments[i] + ' ' + i + ' of ' + arguments.length);
              songIdObjArray[i] = new Object();
              songIdObjArray[i].songObj = arguments[i];
              songIdObjArray[i].songId = songIdArray[i];
@@ -129,6 +128,7 @@ this.getSongObjsFromIds = function(songIdArray, callback) {
        
   self.waitOn.apply(self,functions);
 }
+
 // Next three functions return songObj, songIds by returning arrays of objects with
 // .songId and .songObj attributes
 this.getRoomNextSongs = function(roomName, callback) {
@@ -180,12 +180,38 @@ this.doesRoomExist = function(roomName, callback) {
 }
 
 
+// Should probably combine this with getSongObjsFromIds somehow
+//  so that we have a generic function
+this.getClientsFromIds = function(clientIdArray, callback) {
+  // takes an array of client ids and returns an array of
+  // clientIds / clientObjs with attributes
+  var functions = [];
+  for(var idx=0; idx < clientIdArray.length; idx++){
+      functions.push([redisClient.get, ['client:'+clientIdArray[idx]+':name']]);
+  }
+
+  function returnFn() {
+      // function called when all the client ids have been turned into spotify objects
+          var clientIdObjArray = [];
+          for(var i=0; i< arguments.length; i++) {
+             clientIdObjArray[i] = new Object();
+             clientIdObjArray[i].name = arguments[i];
+             clientIdObjArray[i].id = clientIdArray[i];
+          }
+          callback(null,clientIdObjArray);
+   }
+ 
+  functions.push(returnFn);
+       
+  self.waitOn.apply(self,functions);
+}
+
 this.getClientsInRoom = function(roomName, callback) {
   // should return a list of client ids and names, but for now
   // just returns the client ids
   self.getSet('room:'+roomName+':client.ids', function(err,clients) {
      console.log('\n\n*********** CLIENTS IN ROOM : ' + clients);
-     callback(err,clients);
+     self.getClientsFromIds(clients, callback);
   });
 }
 

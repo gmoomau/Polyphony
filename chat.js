@@ -39,6 +39,9 @@ this.beginChat = function(socket){
                }
 
                io.sockets.in(room).emit('chat message', 'system', oldName+' is now known as '+setName);
+               redis.getClientsInRoom(room, function(err, clients) {
+                       io.sockets.in(room).emit('chat clients', clients);
+                   });
                sessionStore.get(socket.handshake.sessionID, function(err, session){
                       // save new name in cookie
                       if(!err && session){
