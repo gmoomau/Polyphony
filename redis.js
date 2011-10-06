@@ -267,6 +267,9 @@ this.getTopSongs = function(roomName, numSongs, callback) {
     console.log('\n\n*********** TOP SONGS ROOM: '+roomName);
     redisClient.zrevrange('room:'+roomName+':next.songs', 0,numSongs-1, function(err,results) {
        console.log('\n\n******** TOP SONG RESULTS: ' + err + ' ' + ' ' + results);
+       if (results == '') {
+           callback(err, null);
+       }
        // have to convert song ids into spotify objects
        // do this by calling waitOn with a whole bunch of gets
        var functions = [];

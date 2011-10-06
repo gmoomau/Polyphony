@@ -154,7 +154,7 @@ function playNextSong(room) {
         // No current song to play, get rid of currentlyPlaying on client?
         // Go to a state where we immediately start playing the next song to be added?
         io.sockets.in(room).emit('song end');
-        io.sockets.in(room).emit('vote topsongs', null);
+        io.sockets.in(room).emit('vote topsongs', []);
      }
    }); 
 

@@ -113,9 +113,9 @@ function initSongs(socket) {
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
       // check to make sure that this song isn't already playing
       // could happen if a song add gets set before the song change arrives
-      var curSongId = parseInt($(".currentlyPlaying").attr('id'));
+       var curSongId = parseInt($(".currentlyPlaying").attr('id'));
 
-      if (songId != curSongId) {
+            if (songId != curSongId) {
         // bump previously played song up
         var prevSong = $(".currentlyPlaying");
         prevSong.removeClass("currentlyPlaying");
@@ -129,8 +129,13 @@ function initSongs(socket) {
          // mark current song as playing
         var nowPlaying = $("#"+songId+"_songDiv");
         nowPlaying.removeClass("comingUp");
-        nowPlaying.addClass("currentlyPlaying"); 
-      }
+        nowPlaying.addClass("currentlyPlaying");
+    }
+
+    // set the currentSong name at the top of the page
+    // this text includes the Set! div thing, so just remove that
+    $("#currentSong").text($("#"+songId+"_songDiv").text().replace('Set!', ''));        
+
 });
 
 // No more songs being played, make it obvious to user
@@ -138,6 +143,7 @@ socket.on('song end', function() {
     var prevSong = $(".currentlyPlaying");
     prevSong.removeClass("currentlyPlaying");
     prevSong.addClass("alreadyPlayed");    
+    $("#currentSong").text('');
 });
 
 socket.on('song add', function(songInfo, songId, songStatus){

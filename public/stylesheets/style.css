@@ -32,6 +32,10 @@ input {
 #inputSongs {
 }
 
+#currentSong {
+ font-size: 12px;
+}
+
 #topSongContainer {
   float: right;
   width: 35%;

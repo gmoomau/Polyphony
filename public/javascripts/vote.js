@@ -45,9 +45,12 @@ function initVotes(socket) {
     socket.on('vote topsongs', function(songs) {
       $("#topSongList").text('');
       var newSongList = '<ol>';
-      for(var i=0; i<songs.length; i++){
-          var songObj = JSON.parse(songs[i]);
-          newSongList += '<li class="topSong">'+getSongArtist(songObj) + ' - ' + getSongName(songObj)+'</li>';
+      if (songs != null) {
+          alert(songs);
+        for(var i=0; i<songs.length; i++){
+            var songObj = JSON.parse(songs[i]);
+            newSongList += '<li class="topSong">'+getSongArtist(songObj) + ' - ' + getSongName(songObj)+'</li>';
+        }
       }
       newSongList += '</ol>';
       $("#topSongList").html(newSongList);
