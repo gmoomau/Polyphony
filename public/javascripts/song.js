@@ -3,6 +3,8 @@
 
 var searchResults = [];  // an array storing all search results
 var prevSongPlayed = -1;  // the ID of the previously played song
+var elapsedTime = 0;
+var songLength = 0;
 
 function queueSong(text) {
     $("#uri").val(text);
@@ -25,6 +27,15 @@ function searchForSongs(){
       else {
         $("#results").text('');
       }
+}
+
+function updateTimeBar() {
+   var newWidth = elapsedTime / songLength * 100;
+   $("#timeBarInner").width(newWidth+'%');
+   elapsedTime += 1;
+   if (newWidth < 100) {
+     setTimeout(updateTimeBar, 1000);
+   }
 }
 
 // is given the search results from the spotify api and sets the global searchResults
@@ -108,14 +119,18 @@ function processResults (spotifyResults) {
   }
 
 function initSongs(socket) {
+     $("#timeBarOuter").hide();
 // songStart is either 0, or the time when the song started playing in the room in millis
-   socket.on('song change', function(songId, songURI, mins, secs){
+   socket.on('song change', function(songId, songURI, mins, secs, total){
+      songLength = total;  // global time 
+      elapsedTime = mins*60 + secs;
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
+      $("#timeBarOuter").show();
       // check to make sure that this song isn't already playing
       // could happen if a song add gets set before the song change arrives
        var curSongId = parseInt($(".currentlyPlaying").attr('id'));
 
-            if (songId != curSongId) {
+     if (songId != curSongId) {
         // bump previously played song up
         var prevSong = $(".currentlyPlaying");
         prevSong.removeClass("currentlyPlaying");
@@ -134,16 +149,19 @@ function initSongs(socket) {
 
     // set the currentSong name at the top of the page
     // this text includes the Set! div thing, so just remove that
-    $("#currentSong").text($("#"+songId+"_songDiv").text().replace('Set!', ''));        
+    $("#currentSongName").text($("#"+songId+"_songDiv").text().replace('Set!', ''));        
+   
+    setTimeout(updateTimeBar,0);
 
 });
 
 // No more songs being played, make it obvious to user
 socket.on('song end', function() {
+    $("#timeBarOuter").hide();
     var prevSong = $(".currentlyPlaying");
     prevSong.removeClass("currentlyPlaying");
     prevSong.addClass("alreadyPlayed");    
-    $("#currentSong").text('');
+    $("#currentSongName").text('');
 });
 
 socket.on('song add', function(songInfo, songId, songStatus){

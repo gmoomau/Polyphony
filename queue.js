@@ -95,7 +95,7 @@ this.addClient = function(socket, room){
               var curSong = JSON.parse(curSongRes.songObj);
               redis.getRoomCurStart (room, function(err, startTime) {
                 var diff = (new Date()).getTime() - startTime;
-                socket.emit('song change', curSongRes.songId, curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60));  // start playback
+                socket.emit('song change', curSongRes.songId, curSong.href, Math.floor(diff/(1000*60)), Math.floor((diff/1000)%60), curSong.length);  // start playback
               });
            }
          });
@@ -138,7 +138,7 @@ function playNextSong(room) {
            clearTimeout(songTimeout[room]);
          }
         curSong = JSON.parse(curSongStr);
-        io.sockets.in(room).emit('song change', curSongId, curSong.href, 0,0);
+        io.sockets.in(room).emit('song change', curSongId, curSong.href, 0,0, curSong.length);
         // set timeout to call changeSongs again after appropriate timeout
         songTimeout[room] = setTimeout(function(){
            playNextSong(room);
