@@ -525,10 +525,20 @@ this.changeSongs = function(roomName, callback) {
          });     
       });
      }
-     else { // no next song, still need to get rid of cur song!!!
-         redisClient.set('room:' + roomName + ':cur.song', '', function(err) {
-           callback(err,null,null);
-             });
+     else { 
+        // no next song, still need to get rid of cur song and push it into the prev list
+         redisClient.get('room:'+roomName+':cur.song', function(err, cursong) {
+           if(cursong != '') {      // Push cursong onto prev songs and LTRIM that list
+                redisClient.lpush('room:'+roomName+':prev.songs', cursong, function(err, res) {
+                   self.waitOn([redisClient.ltrim, ['room:'+roomName+':prev.songs', 0,2]],
+                               [redisClient.set, ['room:' + roomName + ':cur.song', '']],
+                               function() {
+                                 callback(err,null,null);
+                    });
+
+               });
+            }
+          });
      }
 
    });

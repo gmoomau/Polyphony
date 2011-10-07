@@ -104,7 +104,7 @@ this.addClient = function(socket, room){
        console.log('\n\n************* queue waitOn');
             redis.waitOn([redis.getRoomPrevSongs, [room]], [redis.getRoomCurSong, [room]], [redis.getRoomNextSongs, [room]], function(prevSongs, curSong, nextSongs) {
           for(var song in prevSongs){
-              console.log('\n\n******** sending prev queue');
+              console.log('\n\n******** sending prev queue ' + song);
               socket.emit('song add', JSON.parse(prevSongs[song].songObj), prevSongs[song].songId, 'prev');
           }
           for (var song in curSong) {
@@ -131,7 +131,7 @@ this.disconnect = function(socket, room){
 }
 
 function playNextSong(room) {
-    redis.changeSongs(room, function(err,curSongId, curSongStr){
+   redis.changeSongs(room, function(err,curSongId, curSongStr){
      console.log('\n\n********* song changed. new song is: ' + curSongId + ' ' + curSongStr);
      if (curSongStr != null) {
          if(songTimeout[room] != null){
