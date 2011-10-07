@@ -3,7 +3,7 @@
 
 var searchResults = [];  // an array storing all search results
 var prevSongPlayed = -1;  // the ID of the previously played song
-var elapsedTime = 0;
+var startTime;
 var songLength = 0;
 
 function queueSong(text) {
@@ -30,9 +30,9 @@ function searchForSongs(){
 }
 
 function updateTimeBar() {
-   var newWidth = elapsedTime / songLength * 100;
+   var elapsedTime = ((new Date()).getTime() - startTime) / 1000;  // times are in millis
+   var newWidth = (elapsedTime / songLength) * 100;
    $("#timeBarInner").width(newWidth+'%');
-   elapsedTime += 1;
    if (newWidth < 100) {
      setTimeout(updateTimeBar, 1000);
    }
@@ -123,7 +123,8 @@ function initSongs(socket) {
 // songStart is either 0, or the time when the song started playing in the room in millis
    socket.on('song change', function(songId, songURI, mins, secs, total){
       songLength = total;  // global time 
-      elapsedTime = mins*60 + secs;
+      startTime = (new Date()).getTime() - mins*60*1000 - secs * 1000;  // 
+
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
       $("#timeBarOuter").show();
       // check to make sure that this song isn't already playing
