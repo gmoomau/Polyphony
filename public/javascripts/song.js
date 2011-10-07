@@ -5,6 +5,7 @@ var searchResults = [];  // an array storing all search results
 var prevSongPlayed = -1;  // the ID of the previously played song
 var startTime;
 var songLength = 0;
+var curSongURI;           // currently playing song
 
 function queueSong(text) {
     $("#uri").val(text);
@@ -119,14 +120,15 @@ function processResults (spotifyResults) {
   }
 
 function initSongs(socket) {
-     $("#timeBarOuter").hide();
+     $("#currentSong").hide();
 // songStart is either 0, or the time when the song started playing in the room in millis
    socket.on('song change', function(songId, songURI, mins, secs, total){
       songLength = total;  // global time 
-      startTime = (new Date()).getTime() - mins*60*1000 - secs * 1000;  // 
+      startTime = (new Date()).getTime() - mins*60*1000 - secs * 1000;  // compute time of when the song started in millis
+      curSongURI = songURI; 
 
       $("#loadSong").attr('src', songURI+'#'+mins+':'+secs);
-      $("#timeBarOuter").show();
+      $("#currentSong").show();
       // check to make sure that this song isn't already playing
       // could happen if a song add gets set before the song change arrives
        var curSongId = parseInt($(".currentlyPlaying").attr('id'));
@@ -158,7 +160,7 @@ function initSongs(socket) {
 
 // No more songs being played, make it obvious to user
 socket.on('song end', function() {
-    $("#timeBarOuter").hide();
+    $("#currentSong").hide();
     var prevSong = $(".currentlyPlaying");
     prevSong.removeClass("currentlyPlaying");
     prevSong.addClass("alreadyPlayed");    
@@ -224,6 +226,13 @@ socket.on('song add', function(songInfo, songId, songStatus){
 
     $("#songSearch").click(function(e) {
        $("#songSearch").val('');
+    });
+
+    $("#syncButton").click(function(e) {
+      var elapsedTime = ((new Date()).getTime() - startTime) / 1000;  // times are in millis 
+      var mins = Math.floor(elapsedTime/60);
+      var secs = Math.floor(elapsedTime % 60);
+      $("#loadSong").attr('src', curSongURI+'#'+mins+':'+secs);
     });
 
 }
