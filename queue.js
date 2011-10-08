@@ -50,10 +50,7 @@ this.prepareQueue = function(socket) {
          if(songTimeout[room] != null){
            clearTimeout(songTimeout[room]);
          }
-         playNextSong(room, true);
-         redis.getClientName(clientId, function(err, name) {
-            io.sockets.in(room).emit('chat message', 'system', name + ' changed songs');
-         });
+         playNextSong(room, clientId);
        });
     });
   });
@@ -149,7 +146,7 @@ this.disconnect = function(socket, room){
 // userCall = true means that a user hit the next song button
 // which means that if the room is null we should do nothing rather than emit
 // the song end
-function playNextSong(room, userCall) {
+function playNextSong(room, clientId) {
    redis.changeSongs(room, function(err,curSongId, curSongStr){
      console.log('\n\n********* song changed. new song is: ' + curSongId + ' ' + curSongStr);
      if (curSongStr != null) {
@@ -160,16 +157,22 @@ function playNextSong(room, userCall) {
         io.sockets.in(room).emit('song change', curSongId, curSong.href, 0,0, curSong.length);
         // set timeout to call changeSongs again after appropriate timeout
         songTimeout[room] = setTimeout(function(){
-            playNextSong(room,false);
+            playNextSong(room,null);
             }, curSong.length*1000+600);  // add a little buffer for the user since the song won't immediately start b/c of network delay etc
         // find the new top songs now that a song is off the next song list
         redis.getTopSongs(room, NUM_TOP_SONGS, function(err,topSongs) {
             // emit the top songs to clients in the room
             io.sockets.in(room).emit('vote topsongs', topSongs);
         });
+        if(clientId != null) {
+          // tell users who changed tracks
+          redis.getClientName(clientId, function(err, name) {
+              io.sockets.in(room).emit('chat message', 'system', name + ' changed songs');
+          });
+        }
 
      }
-     else if(!userCall) {
+     else if(clientId == null) {
         // No current song to play, get rid of currentlyPlaying on client?
         // Go to a state where we immediately start playing the next song to be added?
         io.sockets.in(room).emit('song end');
