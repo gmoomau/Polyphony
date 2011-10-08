@@ -158,7 +158,7 @@ function playNextSong(room) {
         // set timeout to call changeSongs again after appropriate timeout
         songTimeout[room] = setTimeout(function(){
            playNextSong(room);
-        }, curSong.length*1000);
+            }, curSong.length*1000+600);  // add a little buffer for the user since the song won't immediately start b/c of network delay etc
         // find the new top songs now that a song is off the next song list
         redis.getTopSongs(room, NUM_TOP_SONGS, function(err,topSongs) {
             // emit the top songs to clients in the room

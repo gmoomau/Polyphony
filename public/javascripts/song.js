@@ -153,6 +153,7 @@ function initSongs(socket) {
     // set the currentSong name at the top of the page
     // this text includes the Set! div thing, so just remove that
     $("#currentSongName").text($("#"+songId+"_songDiv").text().replace('Set!', ''));        
+    $("#"+songId+"_voteOuter").remove();  // remove possibility of voting for old song   
    
     setTimeout(updateTimeBar,0);
 
