@@ -156,18 +156,23 @@ function initSongs(socket) {
    
     setTimeout(updateTimeBar,0);
 
-});
+  });
 
-// No more songs being played, make it obvious to user
-socket.on('song end', function() {
+   // When a song gets low votes it gets removed from the queue
+  socket.on('song remove', function(removeId) {
+       $("#"+removeId+"_songDiv").remove();
+  });
+
+  // No more songs being played, make it obvious to user
+  socket.on('song end', function() {
     $("#currentSong").hide();
     var prevSong = $(".currentlyPlaying");
     prevSong.removeClass("currentlyPlaying");
     prevSong.addClass("alreadyPlayed");    
     $("#currentSongName").text('');
-});
+  });
 
-socket.on('song add', function(songInfo, songId, songStatus){
+  socket.on('song add', function(songInfo, songId, songStatus){
       var trackStatus = 'comingUp';
       if (songStatus == 'prev') {
          trackStatus = 'alreadyPlayed';

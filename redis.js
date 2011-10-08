@@ -129,6 +129,15 @@ this.getSongObjsFromIds = function(songIdArray, callback) {
   self.waitOn.apply(self,functions);
 }
 
+// no useful return
+this.removeSong = function(songId, roomName, callback) {
+    redisClient.zrem('room:' + roomName+':next.songs', songId, callback);
+}
+
+this.getSongObj = function(songId, callback) {
+    redisClient.get('song:'+songId+':spotify.obj', callback);
+}
+
 // Next three functions return songObj, songIds by returning arrays of objects with
 // .songId and .songObj attributes
 this.getRoomNextSongs = function(roomName, callback) {

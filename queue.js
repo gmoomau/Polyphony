@@ -2,6 +2,7 @@ var io;
 
 var MAX_HISTORY = 3;     // max number of previously played songs to keep
 var NUM_TOP_SONGS = 3;   // number of songs displayed in the top songs list
+var MIN_RANK = 20;       // minimum rank a song needs to stay in the queue. below this level it will automatically be removed
 var spotify = require('./spotApi.js');
 
 var songTimeout = {};     // indexed by room
@@ -68,14 +69,29 @@ this.prepareQueue = function(socket) {
            // update the vote for the client
           redis.updateVote(songId, voteId, vote, function(err,newSongAvg) {
               console.log('\n\n************* updated vote!' + songId + ' ' +vote);
-              // find the new top songs now that the song's score has changed
-              redis.getTopSongs(room, NUM_TOP_SONGS, function(err,topSongs) {
-                 console.log('\n\n************* top songs being emitted: ' + topSongs);
-                 // emit the top songs to clients in the room
-                 io.sockets.in(room).emit('vote topsongs', topSongs);
-                 console.log('\n\n************* songId, newSongAvg ' + songId + ', ' +newSongAvg);
-                 io.sockets.in(room).emit('vote update', songId, newSongAvg);
-              });
+              if (newSongAvg > MIN_RANK) {  // song good enough
+                // find the new top songs now that the song's score has changed
+                redis.getTopSongs(room, NUM_TOP_SONGS, function(err,topSongs) {
+                   console.log('\n\n************* top songs being emitted: ' + topSongs);
+                   // emit the top songs to clients in the room
+                   io.sockets.in(room).emit('vote topsongs', topSongs);
+                   console.log('\n\n************* songId, newSongAvg ' + songId + ', ' +newSongAvg);
+                   io.sockets.in(room).emit('vote update', songId, newSongAvg);
+                });
+              }
+              else {   // song sucks
+                  //remove song from the queue and then send out top songs
+                  redis.removeSong(songId, room, function() { // remove from server
+                      redis.getTopSongs(room, NUM_TOP_SONGS, function(err, topSongs) {  // get new top songs
+                          io.sockets.in(room).emit('vote topsongs', topSongs);
+                      });
+                      io.sockets.in(room).emit('song remove', songId);   // remove on client end
+                      redis.getSongObj(songId, function(err, spotifyStr) { // need to send the message to users
+                         var songObject = JSON.parse(spotifyStr);
+                         io.sockets.in(room).emit('chat message', 'system', songObject.artists[0].name + ' - ' + songObject.name + ' was removed due to unpopularity');
+                       });
+                  });
+              }
            });
         });   // end waitOn 
      });
