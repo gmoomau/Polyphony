@@ -101,14 +101,6 @@ input {
   cursor: pointer;
 }
 
-.selectedVote {
-  color: #000000;
-}
-
-.nonselectedVote {
-  color: #888888;
-}
-
 .comingUp {
   color: #C0C0C0;
   clear: both;
@@ -128,40 +120,6 @@ input {
   clear: both;
   font-size: small;
   color: #808080;
-}
-
-.voteOuter {
-  width: 100px;
-  height: 12px;
-  border: 1px solid;
-  border-color: #808080;
-  cursor: pointer;
-  float: left;
-  margin-right: 8px;
-  margin-top: 3px;
-  margin-bottom: 10px;
-  clear: left;
-}
-
-.voteOuterAvg {
-  width: 100px;
-  height: 12px;
-  border: 1px solid;
-  border-color: #808080;
-  float: right;
-  margin-right: 8px;
-  margin-top: 3px;
-  margin-bottom: 10px;
-}
-
-.voteSet {
-  float : left;
-}
-
-.voteInner {
-  width: 50%;
-  height: 100%;
-  background: rgb(127,128,0);
 }
 
 .chatNameMine {

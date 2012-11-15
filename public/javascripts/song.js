@@ -137,26 +137,14 @@ function initSongs(socket) {
     else if (songInfo.status == 'cur') {
       trackStatus = 'currentlyPlaying';
     }
-  var songArtist = getSongArtist(songInfo);
-  var songName = getSongName(songInfo);
+    var songArtist = getSongArtist(songInfo);
+    var songName = getSongName(songInfo);
 
-  var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
-  trackStr += "<div class='voteOuter' id='"+songInfo.id+"_voteOuter'>";
-  trackStr += "<input id='"+songInfo.id+"_voteValue' type='hidden' value='50' />";
-  trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteInner'>&nbsp; </div></div>"; // also closes the voteOuter
+    //html for a track is built here
+    var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
+    //TODO: add song id for voting identification (as a div id?)
 
-  trackStr += "<div class='voteOuterAvg'>"; // doesn't need an id
-  trackStr += "<div class='voteInner' id='"+songInfo.id+"_voteAvg'>&nbsp;</div></div>";  // also closes the voteOuter
-  trackStr += "<span class='voteSet' id='"+songInfo.id+"_voteSet'>Set!</span>"; 
-  trackStr += "</div><p />";  // also closes the track div and voteOuter
-
-  $(trackStr).hide().appendTo("#queue").slideDown('slow');
-  $("#"+songInfo.id+"_voteSet").hide();
-  $("#"+songInfo.id+"_voteOuter").mousemove(slideVote);
-  $("#"+songInfo.id+"_voteOuter").mouseleave(setVoteWidth);
-  $("#"+songInfo.id+"_voteOuter").click(setVote);
-  $("#"+songInfo.id+"_voteOuter").click();
-  setColorAndWidth(songInfo.id, 50, false);
+    $(trackStr).hide().appendTo("#queue").slideDown('slow');
   });
 
   $("#playItOff").click(function(e){

@@ -55,7 +55,7 @@ this.prepareQueue = function(socket) {
   socket.on('vote', function(songId, vote) {
     socket.get('room', function(err,room) { // get room from socket
       votes[room][songId][socket.id] = vote;
-      setSongAvg(songId,room);
+      // TODO: calculate new song score
       io.sockets.in(room).emit('vote topsongs', getTopSongs(room));
     });
   });
@@ -87,20 +87,6 @@ function playNextSong(room) {
       playNextSong(room);
     }, songInfo.length*1000);
   }
-}
-
-function setSongAvg(songId, room) {
-  var avg = 0;
-  var numVotes = 0;
-  for(var key in votes[room][songId]) {
-    avg += votes[room][songId][key];
-    numVotes++;
-  }
-
-  console.log("votes so far: "+numVotes);
-  songs[songId].avg = avg / numVotes;
-  console.log('****songid:'+songId+' avg: '+songs[songId].avg+'****');
-  io.sockets.in(room).emit('vote update', songId, songs[songId].avg);
 }
 
 this.addUser = function(socket, room){
