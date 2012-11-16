@@ -55,6 +55,25 @@ function processResults (spotifyResults) {
   }  
 }
 
+function buildSongDOM(songInfo){
+  //html for a track is built here
+  //var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
+  //TODO: add song id for voting identification (as a div id?)
+  var songArtist = getSongArtist(songInfo);
+  var songName = getSongName(songInfo);
+
+  var trackDOM = "<div class='song box' style='position: relative; width: 90%;";
+  trackDOM += " background-color: #303030; float: left'>"
+  trackDOM += "<img src='../images/album-placeholder.png' style='float: left; margin: 5px'>";
+  trackDOM += "<div style='float: left; padding-left: 10px; margin: 5px'>";
+  trackDOM += songName + "<br>" + songArtist + "</div>";
+  trackDOM += "<div style='position:absolute; bottom:5px; right: 10px'>";
+  trackDOM += "<a href='#'>good</a>  <a href='#'>bad</a></div>";
+  trackDOM += "</div>";
+
+  return trackDOM;
+}
+
 // Displays results starting at a given value
 function displaySearchResults(startAt) {
   var count = 0;  // how many things we've added
@@ -137,12 +156,14 @@ function initSongs(socket) {
     else if (songInfo.status == 'cur') {
       trackStatus = 'currentlyPlaying';
     }
-    var songArtist = getSongArtist(songInfo);
+    /*var songArtist = getSongArtist(songInfo);
     var songName = getSongName(songInfo);
 
     //html for a track is built here
     var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
     //TODO: add song id for voting identification (as a div id?)
+    */
+    var trackStr = buildSongDOM(songInfo);
 
     $(trackStr).hide().appendTo("#queue").slideDown('slow');
   });

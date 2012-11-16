@@ -55,8 +55,8 @@ this.prepareQueue = function(socket) {
   socket.on('vote', function(songId, vote) {
     socket.get('room', function(err,room) { // get room from socket
       votes[room][songId][socket.id] = vote;
-      // TODO: calculate new song score
-      io.sockets.in(room).emit('vote topsongs', getTopSongs(room));
+      // TODO: calculate new song score and deal with that
+      //io.sockets.in(room).emit('vote topsongs', getTopSongs(room));
     });
   });
 
@@ -65,7 +65,7 @@ this.prepareQueue = function(socket) {
 function playNextSong(room) {
   // if curIdx = 2 then we have 3 songs in the queue already, want to make sure
   // we have 4 songs in the queue, meaning that we have a new song to go to
-  if(curQ[room].songs.length > curQ[room].curIdx+1){    
+  if(curQ[room].songs.length > curQ[room].curIdx+1){  
     if (curQ[room].curIdx >= 0) {
       curQ[room].songs[curQ[room].curIdx].status = 'prev';
     }
@@ -117,21 +117,21 @@ this.disconnect = function(socket, room){
     var songId = curQ[room].songs[song].id;
     console.log('\n********songid:'+songId +'********');
     votes[room][songId][socket.id] = 0;
-    setSongAvg(songId,room);
+    //setSongAvg(songId,room);
   }
 }
 
-// function used to sort the song queue based on song avg votes
+// function used to sort the song queue based on song votes
 // songs come from curQ[room].songs
-function sortSongsByAvg(song1, song2) {
-    return songs[song2.id].avg - songs[song1.id].avg;
+function songScoreSort(song1, song2) {
+    // return [scoremagic]
 }
 
 // returns a list containing the top 3 songs in the queue right now
 function getTopSongs(room) {
   var topSongs = [];
   var queue = curQ[room].songs;
-  queue.sort(sortSongsByAvg);
+  //queue.sort(songScoreSort);
   for(var i=0; i<NUM_TOP_SONGS && i<queue.length; i++) {
       topSongs[i] = queue[i];
   }
