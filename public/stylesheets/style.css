@@ -13,6 +13,8 @@ input {
 
 #container {
   position: relative;
+  background-color: #204030;
+  padding: 5px;
 }
 
 .box {
