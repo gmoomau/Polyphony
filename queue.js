@@ -1,11 +1,10 @@
 var io;
 
 var MAX_HISTORY = 3;     // max number of previously played songs to keep
-var NUM_TOP_SONGS = 3;   // number of songs displayed in the top songs list
 var curQ = {};           // current song queue per room. stores 'curIdx' and 'songs'
 // curQ.songs[curIdx] has status = 'cur', if idx < curIdx then status = 'prev'. o/w status = 'next'
 var spotify = require('./spotApi.js');
-var votes = {};          // indexed by room then songId then user
+var votes = {};          // indexed by room then songId
 
 var songs = {};          // represents mapping from songID to songInfo.
 // NOTE: songInfo is also in curQ[room]...
@@ -33,8 +32,8 @@ this.prepareQueue = function(socket) {
           songObject.id = unusedId++;
           curQ[room].songs.push(songObject);
           songs[songObject.id] = songObject;
-          votes[room][songObject.id] = {};
-          io.sockets.in(room).emit('song add', songObject);
+          votes[room][songObject.id] = 0;
+          io.sockets.in(room).emit('song add', songObject, 0);
           console.log("\n******curQ is: " + curQ[room].songs);
         }
       });
@@ -54,9 +53,10 @@ this.prepareQueue = function(socket) {
   // User changed vote
   socket.on('vote', function(songId, vote) {
     socket.get('room', function(err,room) { // get room from socket
-      votes[room][songId][socket.id] = vote;
-      // TODO: calculate new song score and deal with that
-      //io.sockets.in(room).emit('vote topsongs', getTopSongs(room));
+      var user = socket.id;
+      votes[room][songId] += parseInt(vote);
+      io.sockets.in(room).emit('vote update', songId, votes[room][songId]);
+      // once redis is here, have user upvote and downvote lists
     });
   });
 
@@ -107,35 +107,20 @@ this.addUser = function(socket, room){
 
   // send current song queue to user
   for(song in curQ[room].songs){
-    socket.emit('song add', curQ[room].songs[song]);
+    var tmpSong = curQ[room].songs[song];
+    socket.emit('song add', tmpSong, votes[room][tmpSong.id]);
   }
 
 }
 
 this.disconnect = function(socket, room){
-  for(var song in curQ[room].songs){
+  /*for(var song in curQ[room].songs){
     var songId = curQ[room].songs[song].id;
     console.log('\n********songid:'+songId +'********');
     votes[room][songId][socket.id] = 0;
     //setSongAvg(songId,room);
-  }
-}
-
-// function used to sort the song queue based on song votes
-// songs come from curQ[room].songs
-function songScoreSort(song1, song2) {
-    // return [scoremagic]
-}
-
-// returns a list containing the top 3 songs in the queue right now
-function getTopSongs(room) {
-  var topSongs = [];
-  var queue = curQ[room].songs;
-  //queue.sort(songScoreSort);
-  for(var i=0; i<NUM_TOP_SONGS && i<queue.length; i++) {
-      topSongs[i] = queue[i];
-  }
-  return topSongs;
+  }*/
+  // for now, do nothing
 }
 
 module.exports = this;

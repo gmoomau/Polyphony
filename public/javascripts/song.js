@@ -5,6 +5,7 @@
 var searchResults = [];  // an array storing all search results
 
 function queueSong(text) {
+  // submit form to add new song to the playlist
   $("#uri").val(text);
   $("#uri").click();
 }
@@ -40,7 +41,7 @@ function processResults (spotifyResults) {
     var songArtist = getSongArtist(songResult);
     var songString = songName + songArtist;
     if (songString in found) {
-      // see if availability is now true
+      // see if availability is now true (assuming US only)
       if (isSongAvailable(songResult,'US')) {
         // since it is, we want to update the result to reflect this change
         addSongAvailable(searchResults[found[songString]], 'US');
@@ -53,25 +54,6 @@ function processResults (spotifyResults) {
       searchResults.push(songResult);
     }
   }  
-}
-
-function buildSongDOM(songInfo){
-  //html for a track is built here
-  //var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
-  //TODO: add song id for voting identification (as a div id?)
-  var songArtist = getSongArtist(songInfo);
-  var songName = getSongName(songInfo);
-
-  var trackDOM = "<div class='song box' style='position: relative; width: 90%;";
-  trackDOM += " background-color: #303030; float: left'>"
-  trackDOM += "<img src='../images/album-placeholder.png' style='float: left; margin: 5px'>";
-  trackDOM += "<div style='float: left; padding-left: 10px; margin: 5px'>";
-  trackDOM += songName + "<br>" + songArtist + "</div>";
-  trackDOM += "<div style='position:absolute; bottom:5px; right: 10px'>";
-  trackDOM += "<a href='#'>good</a>  <a href='#'>bad</a></div>";
-  trackDOM += "</div>";
-
-  return trackDOM;
 }
 
 // Displays results starting at a given value
@@ -126,6 +108,44 @@ function displaySearchResults(startAt) {
 
 }
 
+// html for a song in the list
+// soon to be replaced by a jade template
+function buildSongDOM(songInfo){
+  var songArtist = getSongArtist(songInfo);
+  var songName = getSongName(songInfo);
+  var trackStatus = 'comingUp';
+  if (songInfo.status == 'prev') {
+    trackStatus = 'alreadyPlayed';
+  }
+  else if (songInfo.status == 'cur') {
+    trackStatus = 'currentlyPlaying';
+  }
+
+  var songId = songInfo.id;
+  var voteUp = "voteForSong(" + songId + ", 1)";
+  var voteDown = "voteForSong(" + songId + ", -1)";
+
+  var trackDOM = "<div class='song box " + trackStatus + "' style='position: relative;";
+  trackDOM += " background-color: #303030; float: left' id='"+ songId + "_songDiv'>";
+  trackDOM += "<img src='../images/album-placeholder.png'";
+  trackDOM += " style='float: left; margin: 5px; height: 40px; width: 40px'>";
+  trackDOM += "<div style='float: left; padding: 10px; margin: 5px'>";
+  trackDOM += songName + "<br>" + songArtist + "</div>";
+  if(trackStatus == 'comingUp'){
+    trackDOM += "<div style='position:absolute; bottom:5px; right: 10px'>";
+    trackDOM += "<a href='#' onClick='" + voteUp + "'>good</a>   ";
+    trackDOM += "<a href='#' onClick='" + voteDown + "'>bad</a></div>";
+  }
+  trackDOM += "</div>";
+
+  return trackDOM;
+}
+
+// send vote to server
+function voteForSong(songId, change){
+  socket.emit('vote', songId, change);
+}
+
 function initSongs(socket) {
   // songStart is either 0, or the time when the song started playing in the room in millis
   socket.on('song change', function(songURI, mins, secs){
@@ -148,24 +168,12 @@ function initSongs(socket) {
     nowPlaying.addClass("currentlyPlaying");
   });
 
-  socket.on('song add', function(songInfo){
-    var trackStatus = 'comingUp';
-    if (songInfo.status == 'prev') {
-      trackStatus = 'alreadyPlayed';
-    }
-    else if (songInfo.status == 'cur') {
-      trackStatus = 'currentlyPlaying';
-    }
-    /*var songArtist = getSongArtist(songInfo);
-    var songName = getSongName(songInfo);
-
-    //html for a track is built here
-    var trackStr = "<div class='"+trackStatus+"'>"+songArtist +" - "+ songName +'</div>';
-    //TODO: add song id for voting identification (as a div id?)
-    */
+  socket.on('song add', function(songInfo, score){
     var trackStr = buildSongDOM(songInfo);
-
     $(trackStr).hide().appendTo("#queue").slideDown('slow');
+
+    // store score as jquery data
+    $("#"+songInfo.id+"_songDiv").data("score", score);
   });
 
   $("#playItOff").click(function(e){
