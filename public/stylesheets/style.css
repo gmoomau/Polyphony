@@ -30,7 +30,7 @@ input {
 .song {
   -moz-border-radius: 5px;
   border-radius: 5px;
-  width: 95%;
+  width: 90%;
 }
 
 #songStuff {
@@ -42,6 +42,8 @@ input {
 }
 
 #queue {
+  max-height: 353px;
+  overflow-y: auto;
 }
 
 #search{
@@ -71,7 +73,7 @@ input {
 }
 .scrolling::-webkit-scrollbar-thumb:vertical {
   border-right: 1px solid #fff;
-  background: rgba(0, 0, 0, .2);
+  background-color: #C0C0C0;
   -webkit-border-radius: 1ex;  
   -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .4);  
 }

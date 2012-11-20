@@ -29,24 +29,20 @@ script
 body
   #container
     #chat.box     
-      p Change your name:
-        input#chatNameSet(type="text")
-        input#chatNameSubmit(type="button",value="Set Name")        
-        #chatHistory.scrolling
+      #chatHistory.scrolling
       p
         span#chatName
         input#chatMessage(type="text")
+    #search.box Search:
+      input#songSearch(type="text", size="30", value="Enter song/artist name")
+      #results
     #songStuff.box
       #inputSongs
         form#uriForm
           input#uri(type="hidden", size ="20" )
           form#next
             input#playItOff(type="submit", value="next song")
-      h5 Songs
-      #queue
-    #search.box Search:
-      input#songSearch(type="text", size="30", value="Enter song/artist name")
-      #results
+      #queue.scrolling
     #people
       case actives
         when 1
