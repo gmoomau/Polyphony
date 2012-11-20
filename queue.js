@@ -30,6 +30,7 @@ this.prepareQueue = function(socket) {
           var songObject = JSON.parse(songInfo).track;
           songObject.status = 'next';
           songObject.id = unusedId++;
+          songObject.room = room;
           curQ[room].songs.push(songObject);
           songs[songObject.id] = songObject;
           votes[room][songObject.id] = 0;
@@ -55,11 +56,30 @@ this.prepareQueue = function(socket) {
     socket.get('room', function(err,room) { // get room from socket
       var user = socket.id;
       votes[room][songId] += parseInt(vote);
+      curQ[room].songs.sort(songListSort); // reorder songlist
       io.sockets.in(room).emit('vote update', songId, votes[room][songId]);
       // once redis is here, have user upvote and downvote lists
     });
   });
 
+}
+
+function songListSort(a, b){
+  // return number < 0 if a should be before b
+  // a is before be if a has a higher score
+  // if the scores are equal choose the song with the higher id
+
+  var aScore = votes[a.room][a.id];
+  var bScore = votes[b.room][b.id];
+
+  if(aScore == bScore){
+    // if a has a lower id, this will be negative
+    return a.id - b.id;
+  }
+  else{
+    // if a has a higher score, this will be negative
+    return bScore - aScore;
+  }
 }
 
 function playNextSong(room) {
