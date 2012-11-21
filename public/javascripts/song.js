@@ -129,7 +129,7 @@ function buildSongDOM(songInfo){
   trackDOM += " background-color: #303030; float: left' id='"+ songId + "_songDiv'>";
   trackDOM += "<img src='../images/album-placeholder.png'";
   trackDOM += " style='float: left; margin: 5px; height: 40px; width: 40px'>";
-  trackDOM += "<div style='float: left; padding: 10px; margin: 5px'>";
+  trackDOM += "<div style='float: left; padding-left: 10px; margin: 5px'>";
   trackDOM += songName + "<br>" + songArtist + "</div>";
   if(trackStatus == 'comingUp'){
     trackDOM += "<div style='position:absolute; bottom:5px; right: 10px'>";
@@ -173,7 +173,10 @@ function initSongs(socket) {
     $(trackStr).hide().appendTo("#queue").slideDown('slow');
 
     // store score as jquery data
-    $("#"+songInfo.id+"_songDiv").data("score", score);
+    var thisSong = $("#"+songInfo.id+"_songDiv");
+    thisSong.data("score", score);
+    thisSong.data("id", songInfo.id);
+
   });
 
   $("#playItOff").click(function(e){
