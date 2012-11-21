@@ -141,6 +141,64 @@ function buildSongDOM(songInfo){
   return trackDOM;
 }
 
+function insertSong(song, id, score){
+  // place a song in the correct spot in the queue
+  var list = $(".song");
+  var oldIndex = list.index(song);
+  var newIndex = 0;
+  var isHidden = song.is(":hidden");
+
+  // TODO: use bubblesort instead of insertionsort
+  list.each(function(index, item){
+    // iterate through list until reaching a song with a lower score
+    // or higher id
+    if(oldIndex != index){
+      // don't compare to self
+      var thisScore = $(item).data("score");
+      if(score > thisScore){
+        // our song has a higher score than anything else in the list
+        return false;
+      }
+      else if(score == thisScore){
+        var thisId = $(item).data("id");
+        if(id < thisId){
+          // our song has a lower id than any other song with this score
+          return false;
+        }
+      }
+    }
+
+    newIndex++;
+  });
+
+  if(oldIndex + 1 != newIndex || isHidden){
+    // only animate if the song is actually moving
+    if(newIndex < list.length){
+      if(!isHidden){
+        // only slideUp if element is already in list
+        song.slideUp('slow', function(){
+          song.insertBefore(list[newIndex]).slideDown('slow');
+        });
+      }
+      else{
+        song.insertBefore(list[newIndex]).slideDown('slow');
+      }
+    }
+    else {
+      // song must be moved to end of queue
+      if(!isHidden){
+        // only slideUp if element is already in list
+        song.slideUp('slow', function(){
+          song.appendTo("#queue").slideDown('slow');
+        });
+      }
+      else{
+        song.appendTo("#queue").slideDown('slow');
+      }
+    }
+  }
+}
+
 // send vote to server
 function voteForSong(songId, change){
   socket.emit('vote', songId, change);
@@ -170,13 +228,12 @@ function initSongs(socket) {
 
   socket.on('song add', function(songInfo, score){
     var trackStr = buildSongDOM(songInfo);
-    $(trackStr).hide().appendTo("#queue").slideDown('slow');
-
-    // store score as jquery data
+    $(trackStr).hide().appendTo("#queue");
     var thisSong = $("#"+songInfo.id+"_songDiv");
     thisSong.data("score", score);
     thisSong.data("id", songInfo.id);
-
+    
+    insertSong(thisSong, songInfo.id, score);
   });
 
   $("#playItOff").click(function(e){
