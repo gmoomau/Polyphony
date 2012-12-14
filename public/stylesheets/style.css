@@ -166,7 +166,7 @@ input {
 }
 
 .instruction {
-  width: 31%;
+  width: 30%;
   float: left;
 }
 
@@ -174,7 +174,7 @@ input {
   background-color: #303030;
   padding: 5px;
   padding-left: 15px;
-  height: 200px;
+  height: 225px;
   font-size: large;
 }
 
