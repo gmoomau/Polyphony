@@ -35,7 +35,7 @@ this.prepareQueue = function(socket) {
           curQ[room].songs.sort(songListSort); // reorder songlist
           songs[songObject.id] = songObject;
           votes[room][songObject.id] = 0;
-          io.sockets.in(room).emit('song add', songObject, 1);
+          io.sockets.in(room).emit('song add', songObject, 0);
           console.log("\n******curQ is: " + curQ[room].songs);
         }
       });
