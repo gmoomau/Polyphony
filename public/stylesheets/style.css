@@ -7,6 +7,14 @@ body {
 a {
   color: #00B7FF;
 }
+a:link {text-decoration:none;}
+a:visited {text-decoration:none;}
+a:hover {text-decoration:underline;}
+a:active {text-decoration:underline;}
+
+div {
+  overflow: hidden;
+}
 
 input {
   margin-left: 10px;
@@ -21,7 +29,7 @@ input {
 .box {
   -moz-border-radius: 0px;
   border-radius: 0px;
-  padding: 5px;
+  padding: 10px;
   margin: 5px;
   background: #000000;
   color: #C0C0C0;
@@ -134,4 +142,42 @@ input {
 
 .chatTime {
   color: #808080;
+}
+
+#header {
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  background-color: #303030;
+}
+
+.title {
+  color: #00B7FF;
+  font-size: xx-large;
+  float: left;
+  padding: 10px;
+}
+
+.subtitle {
+  color: #C0C0C0;
+  font-size: large;
+  float: left;
+  padding-left: 20px;
+  padding-top: 25px;
+}
+
+.instruction {
+  width: 31%;
+  float: left;
+}
+
+.inner {
+  background-color: #303030;
+  padding: 5px;
+  padding-left: 15px;
+  height: 200px;
+  font-size: large;
+}
+
+h2 {
+  color: #00B7FF;
 }

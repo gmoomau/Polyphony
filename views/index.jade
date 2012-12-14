@@ -1,10 +1,52 @@
 doctype 5
 html
 head
-title asdf
+title Polyphony
+script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js");
+
+script
+  function custStation(){
+    window.location.href = "/" + $("#station").val();
+  }
 
 body   
-  #container(style="width: 30%")
-    .box
-      p hello #{name}
-      a(href='#{favRoom}') click
+  #container(style="width: 90%")
+    .box(style="width: 98%")
+      #header
+        .title Polyphony
+        .subtitle listen to music with friends
+    .box.instruction
+      .inner
+        h2 Open Spotify
+        div
+          | You'll need to have Spotify running to use the site. You can get it 
+          a(href="http://www.spotify.com") here
+          | . Then, you can make sure everything is working by trying to listen to a song.
+          | We recommend 
+          a(href="http://open.spotify.com/track/4oaj36KzXRgDg4McgcTsZK") this classic
+          | .
+    .box.instruction
+      .inner
+        h2 Join a station
+        div 
+          | Now you're ready to start listening to music!
+          | You can join an existing station, like 
+          a(href="/pop") pop
+          |  or 
+          a(href="/rock") rock
+          | , or you can create a brand new station:
+          p
+            | Station name: 
+            input(id="station", type="text", size="20", value="#{favRoom}") 
+            button(type="button", onClick="custStation()") Go!
+            
+    .box.instruction
+      .inner
+        h2 Invite your friends
+        div 
+          | Link your friends to your music station. Once they join, you can start 
+          | building up a playlist and listening to music together.
+        
+    //p(style="clear: both") hello #{name}
+    //a(href='#{favRoom}') click
+    include footer
