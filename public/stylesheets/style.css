@@ -50,7 +50,7 @@ input {
 }
 
 #queue {
-  max-height: 353px;
+  height: 353px;
   overflow-y: auto;
 }
 

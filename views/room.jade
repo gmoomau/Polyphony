@@ -1,7 +1,7 @@
 doctype 5
 html
 head
-title sup #{room}
+title Polyphony - #{room}
 script(src="socket.io/socket.io.js");
 script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js");
 script(src="/javascripts/chat.js")
@@ -33,9 +33,6 @@ body
       p
         span#chatName
         input#chatMessage(type="text")
-    #search.box Search:
-      input#songSearch(type="text", size="30", value="Enter song/artist name")
-      #results
     #songStuff.box
       #inputSongs
         form#uriForm
@@ -43,6 +40,9 @@ body
           form#next
             input#playItOff(type="submit", value="next song")
       #queue.scrolling
+    #search.box Search:
+      input#songSearch(type="text", size="30", value="Enter song/artist name")
+      #results
     #people
       case actives
         when 1
